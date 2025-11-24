@@ -20,6 +20,7 @@ import { VideoModule } from './modules/video/video.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { CertificateModule } from './modules/certificates/certificate.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { CertificateModule } from './modules/certificates/certificate.module';
     }),
 
     // Feature Modules
+    EmailModule,
     AuthModule,
     UsersModule,
     CoursesModule,
