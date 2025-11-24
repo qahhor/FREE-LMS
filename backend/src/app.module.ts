@@ -16,6 +16,8 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { VideoModule } from './modules/video/video.module';
+import { QuizModule } from './modules/quiz/quiz.module';
 
 @Module({
   imports: [
@@ -57,6 +59,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     EnrollmentsModule,
     GamificationModule,
     AnalyticsModule,
+    VideoModule,
+    QuizModule,
   ],
 })
 export class AppModule {}
