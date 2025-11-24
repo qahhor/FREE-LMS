@@ -19,6 +19,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { VideoModule } from './modules/video/video.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { ProgressModule } from './modules/progress/progress.module';
+import { CertificateModule } from './modules/certificates/certificate.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ProgressModule } from './modules/progress/progress.module';
     VideoModule,
     QuizModule,
     ProgressModule,
+    CertificateModule,
   ],
 })
 export class AppModule {}
