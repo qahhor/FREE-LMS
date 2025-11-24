@@ -25,6 +25,30 @@ export const routes: Routes = [
     loadChildren: () => import('./features/profile/profile.routes').then(m => m.PROFILE_ROUTES),
     canActivate: [authGuard]
   },
+  // Phase 3: Monetization & Enterprise Routes
+  {
+    path: 'subscriptions',
+    loadChildren: () => import('./features/subscriptions/subscriptions.routes').then(m => m.SUBSCRIPTIONS_ROUTES)
+  },
+  {
+    path: 'organizations',
+    loadChildren: () => import('./features/organizations/organizations.routes').then(m => m.ORGANIZATIONS_ROUTES),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'scorm',
+    loadChildren: () => import('./features/scorm/scorm.routes').then(m => m.SCORM_ROUTES),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'webinars',
+    loadChildren: () => import('./features/webinars/webinars.routes').then(m => m.WEBINARS_ROUTES),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'payments',
+    loadChildren: () => import('./features/payments/payments.routes').then(m => m.PAYMENTS_ROUTES)
+  },
   {
     path: '**',
     redirectTo: '/dashboard'
