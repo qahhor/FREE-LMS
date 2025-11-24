@@ -1,0 +1,115 @@
+<div class="comment-section">
+  <h3 class="section-title">
+    Comments ({{ totalComments }})
+  </h3>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading comments...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <p>{{ error }}</p>
+    <button class="btn btn-secondary" (click)="loadComments()">Retry</button>
+  </div>
+
+  <!-- Comment Input -->
+  <div *ngIf="!loading && !error" class="comment-input-wrapper">
+    <div *ngIf="replyingToComment" class="replying-notice">
+      Replying to {{ replyingToComment.author.firstName }}
+      <button class="cancel-btn" (click)="cancelReply()">×</button>
+    </div>
+
+    <textarea
+      [(ngModel)]="newCommentContent"
+      class="comment-input"
+      rows="3"
+      placeholder="Add a comment..."
+    ></textarea>
+
+    <button
+      class="btn btn-primary"
+      [disabled]="!newCommentContent.trim() || submittingComment"
+      (click)="onSubmitComment()"
+    >
+      {{ submittingComment ? 'Posting...' : (replyingToComment ? 'Post Reply' : 'Post Comment') }}
+    </button>
+  </div>
+
+  <!-- Comments List -->
+  <div *ngIf="!loading && !error" class="comments-list">
+    <div *ngFor="let comment of comments" class="comment-card">
+      <!-- Author -->
+      <div class="comment-author">
+        <div class="author-avatar">
+          {{ comment.author.firstName[0] }}{{ comment.author.lastName[0] }}
+        </div>
+        <div class="author-info">
+          <div class="author-name">
+            {{ comment.author.firstName }} {{ comment.author.lastName }}
+            <span *ngIf="comment.isInstructorReply" class="instructor-badge">
+              Instructor
+            </span>
+          </div>
+          <div class="comment-date">
+            {{ formatDate(comment.createdAt) }}
+            <span *ngIf="comment.isEdited" class="edited-label">(edited)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content (Edit Mode) -->
+      <div *ngIf="editingComment?.id === comment.id" class="edit-form">
+        <textarea
+          [(ngModel)]="editContent"
+          class="edit-textarea"
+          rows="3"
+        ></textarea>
+        <div class="edit-actions">
+          <button class="btn btn-primary btn-sm" (click)="saveEdit()">Save</button>
+          <button class="btn btn-secondary btn-sm" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Content (View Mode) -->
+      <div *ngIf="editingComment?.id !== comment.id" class="comment-content">
+        {{ comment.content }}
+      </div>
+
+      <!-- Actions -->
+      <div class="comment-actions">
+        <button
+          class="action-btn"
+          [class.active]="userLikedComments.has(comment.id)"
+          (click)="toggleLike(comment)"
+        >
+          ❤️ {{ comment.likesCount }}
+        </button>
+        <button class="action-btn" (click)="onReply(comment)">
+          💬 Reply ({{ comment.repliesCount }})
+        </button>
+        <button
+          *ngIf="isAuthor(comment.authorId)"
+          class="action-btn"
+          (click)="onEdit(comment)"
+        >
+          ✏️ Edit
+        </button>
+        <button
+          *ngIf="isAuthor(comment.authorId)"
+          class="action-btn danger"
+          (click)="onDelete(comment)"
+        >
+          🗑️ Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && comments.length === 0" class="empty-state">
+    <p>No comments yet. Be the first to comment!</p>
+  </div>
+</div>

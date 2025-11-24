@@ -1,0 +1,246 @@
+<div class="topic-view-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading topic...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="btn btn-secondary" routerLink="/forum">Back to Forum</button>
+  </div>
+
+  <!-- Topic Content -->
+  <div *ngIf="!loading && !error && topic">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a routerLink="/forum">Forum</a>
+      <span class="separator">›</span>
+      <a [routerLink]="['/forum/category', topic.category.slug]">{{ topic.category.name }}</a>
+      <span class="separator">›</span>
+      <span>{{ topic.title }}</span>
+    </nav>
+
+    <!-- Topic Header -->
+    <div class="topic-header">
+      <div class="topic-status-badges">
+        <span *ngIf="topic.isPinned" class="status-badge pinned">📌 Pinned</span>
+        <span *ngIf="topic.isLocked" class="status-badge locked">🔒 Locked</span>
+      </div>
+
+      <h1 class="topic-title">{{ topic.title }}</h1>
+
+      <!-- Tags -->
+      <div *ngIf="topic.tags && topic.tags.length > 0" class="topic-tags">
+        <span *ngFor="let tag of topic.tags" class="tag">
+          #{{ tag.name }}
+        </span>
+      </div>
+
+      <!-- Topic Stats -->
+      <div class="topic-stats">
+        <div class="stat">
+          <i class="icon-eye"></i>
+          <span>{{ topic.viewsCount }} views</span>
+        </div>
+        <div class="stat">
+          <i class="icon-message"></i>
+          <span>{{ topic.repliesCount }} replies</span>
+        </div>
+        <div class="stat">
+          <i class="icon-heart"></i>
+          <span>{{ topic.likesCount }} likes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Original Post -->
+    <div class="post-card original-post">
+      <div class="post-author">
+        <div class="author-avatar">
+          {{ topic.author.firstName[0] }}{{ topic.author.lastName[0] }}
+        </div>
+        <div class="author-info">
+          <div class="author-name">
+            {{ topic.author.firstName }} {{ topic.author.lastName }}
+          </div>
+          <div class="author-role">Topic Author</div>
+          <div class="post-date">{{ formatDate(topic.createdAt) }}</div>
+        </div>
+      </div>
+
+      <div class="post-content">
+        <p [innerHTML]="topic.content"></p>
+      </div>
+
+      <div class="post-actions">
+        <button
+          class="action-btn"
+          [class.active]="userLikedTopic"
+          (click)="toggleTopicLike()"
+        >
+          <i class="icon-heart"></i>
+          <span>{{ userLikedTopic ? 'Liked' : 'Like' }}</span>
+        </button>
+        <button class="action-btn" (click)="replyingToPost = null">
+          <i class="icon-reply"></i>
+          <span>Reply</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Replies -->
+    <div class="replies-section">
+      <h2 class="replies-header">
+        {{ totalPosts }} {{ totalPosts === 1 ? 'Reply' : 'Replies' }}
+      </h2>
+
+      <div *ngFor="let post of posts" class="post-card">
+        <!-- Best Answer Badge -->
+        <div *ngIf="post.isBestAnswer" class="best-answer-badge">
+          ✓ Best Answer
+        </div>
+
+        <div class="post-author">
+          <div class="author-avatar">
+            {{ post.author.firstName[0] }}{{ post.author.lastName[0] }}
+          </div>
+          <div class="author-info">
+            <div class="author-name">
+              {{ post.author.firstName }} {{ post.author.lastName }}
+            </div>
+            <div class="post-date">
+              {{ formatDate(post.createdAt) }}
+              <span *ngIf="post.isEdited" class="edited-label">(edited)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reply To -->
+        <div *ngIf="post.replyTo" class="reply-to">
+          Replying to {{ post.replyTo.author.firstName }} {{ post.replyTo.author.lastName }}
+        </div>
+
+        <!-- Post Content (Edit Mode) -->
+        <div *ngIf="editingPost?.id === post.id" class="edit-form">
+          <textarea
+            [(ngModel)]="editContent"
+            class="edit-textarea"
+            rows="5"
+            placeholder="Edit your post..."
+          ></textarea>
+          <div class="edit-actions">
+            <button class="btn btn-primary" (click)="saveEdit()">Save</button>
+            <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Post Content (View Mode) -->
+        <div *ngIf="editingPost?.id !== post.id" class="post-content">
+          <p [innerHTML]="post.content"></p>
+        </div>
+
+        <div class="post-actions">
+          <button
+            class="action-btn"
+            [class.active]="userLikedPosts.has(post.id)"
+            (click)="togglePostLike(post)"
+          >
+            <i class="icon-heart"></i>
+            <span>{{ post.likesCount }}</span>
+          </button>
+          <button class="action-btn" (click)="onReply(post)">
+            <i class="icon-reply"></i>
+            <span>Reply</span>
+          </button>
+          <button
+            *ngIf="isAuthor(post.authorId)"
+            class="action-btn"
+            (click)="onEdit(post)"
+          >
+            <i class="icon-edit"></i>
+            <span>Edit</span>
+          </button>
+          <button
+            *ngIf="isAuthor(post.authorId)"
+            class="action-btn danger"
+            (click)="onDelete(post)"
+          >
+            <i class="icon-trash"></i>
+            <span>Delete</span>
+          </button>
+          <button
+            *ngIf="isTopicAuthor() && !post.isBestAnswer && !topic.isLocked"
+            class="action-btn success"
+            (click)="markBestAnswer(post)"
+          >
+            <i class="icon-check"></i>
+            <span>Mark Best Answer</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="pagination">
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage === 1"
+        (click)="onPageChange(currentPage - 1)"
+      >
+        ‹ Previous
+      </button>
+
+      <button
+        *ngFor="let page of getPageNumbers()"
+        class="pagination-btn page-number"
+        [class.active]="page === currentPage"
+        (click)="onPageChange(page)"
+      >
+        {{ page }}
+      </button>
+
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage === totalPages"
+        (click)="onPageChange(currentPage + 1)"
+      >
+        Next ›
+      </button>
+    </div>
+
+    <!-- Reply Box -->
+    <div *ngIf="!topic.isLocked" class="reply-box">
+      <h3>{{ replyingToPost ? 'Reply to ' + replyingToPost.author.firstName : 'Post a Reply' }}</h3>
+
+      <div *ngIf="replyingToPost" class="replying-to-notice">
+        <span>Replying to {{ replyingToPost.author.firstName }} {{ replyingToPost.author.lastName }}</span>
+        <button class="cancel-reply-btn" (click)="cancelReply()">×</button>
+      </div>
+
+      <textarea
+        [(ngModel)]="newPostContent"
+        class="reply-textarea"
+        rows="6"
+        placeholder="Write your reply..."
+      ></textarea>
+
+      <div class="reply-actions">
+        <button
+          class="btn btn-primary"
+          [disabled]="!newPostContent.trim() || submittingPost"
+          (click)="onSubmitPost()"
+        >
+          {{ submittingPost ? 'Posting...' : 'Post Reply' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Locked Notice -->
+    <div *ngIf="topic.isLocked" class="locked-notice">
+      🔒 This topic is locked. No new replies can be added.
+    </div>
+  </div>
+</div>
