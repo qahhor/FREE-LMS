@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: lms_user
       POSTGRES_PASSWORD: lms_password
-      POSTGRES_MULTIPLE_DATABASES: lms_auth,lms_courses,lms_enrollments,lms_payments,lms_notifications,lms_analytics,lms_organizations
+      POSTGRES_MULTIPLE_DATABASES: lms_auth,lms_courses,lms_enrollments,lms_payments,lms_notifications,lms_analytics,lms_organizations,lms_learning_paths,lms_skills,lms_gamification,lms_idp,lms_feedback,lms_mentoring,lms_social,lms_compliance,lms_reporting,lms_integrations
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
@@ -382,6 +382,213 @@ services:
       REDIS_PORT: 6379
       KAFKA_SERVERS: kafka:29092
       JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  # Advanced Feature Services
+  learning-path-service:
+    build:
+      context: ./services/learning-path-service
+      dockerfile: Dockerfile
+    container_name: lms-learning-path-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8088:8088"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_learning_paths
+      REDIS_HOST: redis
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  skills-service:
+    build:
+      context: ./services/skills-service
+      dockerfile: Dockerfile
+    container_name: lms-skills-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8089:8089"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_skills
+      REDIS_HOST: redis
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  gamification-service:
+    build:
+      context: ./services/gamification-service
+      dockerfile: Dockerfile
+    container_name: lms-gamification-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8090:8090"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_gamification
+      REDIS_HOST: redis
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  idp-service:
+    build:
+      context: ./services/idp-service
+      dockerfile: Dockerfile
+    container_name: lms-idp-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8091:8091"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_idp
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  feedback-service:
+    build:
+      context: ./services/feedback-service
+      dockerfile: Dockerfile
+    container_name: lms-feedback-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8092:8092"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_feedback
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  mentoring-service:
+    build:
+      context: ./services/mentoring-service
+      dockerfile: Dockerfile
+    container_name: lms-mentoring-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8093:8093"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_mentoring
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  social-learning-service:
+    build:
+      context: ./services/social-learning-service
+      dockerfile: Dockerfile
+    container_name: lms-social-learning-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8094:8094"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_social
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  compliance-service:
+    build:
+      context: ./services/compliance-service
+      dockerfile: Dockerfile
+    container_name: lms-compliance-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8095:8095"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_compliance
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  reporting-service:
+    build:
+      context: ./services/reporting-service
+      dockerfile: Dockerfile
+    container_name: lms-reporting-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8096:8096"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_reporting
+      KAFKA_SERVERS: kafka:29092
+    networks:
+      - lms-network
+
+  integration-service:
+    build:
+      context: ./services/integration-service
+      dockerfile: Dockerfile
+    container_name: lms-integration-service
+    depends_on:
+      - config-server
+      - postgres
+      - kafka
+    ports:
+      - "8097:8097"
+    environment:
+      EUREKA_HOST: service-registry
+      CONFIG_HOST: config-server
+      DB_HOST: postgres
+      DB_NAME: lms_integrations
+      KAFKA_SERVERS: kafka:29092
     networks:
       - lms-network
 
