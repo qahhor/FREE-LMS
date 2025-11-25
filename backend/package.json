@@ -62,7 +62,8 @@
     "xml2js": "^0.6.2",
     "axios": "^1.6.2",
     "jsonwebtoken": "^9.0.2",
-    "fs-extra": "^11.2.0"
+    "fs-extra": "^11.2.0",
+    "web-push": "^3.6.6"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",

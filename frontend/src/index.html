@@ -1,16 +1,58 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>LMS Platform - Learning Management System</title>
+  <title>FREE LMS - Платформа для онлайн-обучения</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- SEO -->
+  <meta name="description" content="Enterprise-ready платформа для онлайн-обучения с AI, монетизацией и multi-tenancy">
+  <meta name="keywords" content="lms, обучение, курсы, онлайн образование, e-learning">
+  <meta name="author" content="FREE LMS">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3f51b5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FREE LMS">
+
+  <!-- Icons -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-192x192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- iOS Splash Screens -->
+  <link rel="apple-touch-startup-image" href="assets/splash/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px)">
+  <link rel="apple-touch-startup-image" href="assets/splash/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px)">
+  <link rel="apple-touch-startup-image" href="assets/splash/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px)">
 </head>
 <body>
   <app-root></app-root>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('SW registered:', registration);
+          })
+          .catch(error => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
