@@ -1,0 +1,43 @@
+server:
+  port: 8084
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms_payments}
+    username: ${DB_USER:lms_user}
+    password: ${DB_PASSWORD:lms_password}
+
+# Payment service specific settings
+payment:
+  currency:
+    default: USD
+    supported: USD,EUR,UZS
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:sk_test_}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_}
+  payme:
+    merchant-id: ${PAYME_MERCHANT_ID:}
+    secret-key: ${PAYME_SECRET_KEY:}
+    test-mode: true
+  click:
+    merchant-id: ${CLICK_MERCHANT_ID:}
+    service-id: ${CLICK_SERVICE_ID:}
+    secret-key: ${CLICK_SECRET_KEY:}
+    test-mode: true
+
+# Subscription plans
+subscription:
+  plans:
+    free:
+      courses-limit: 3
+      storage-mb: 100
+    pro:
+      price-monthly: 9.99
+      price-yearly: 99.99
+      courses-limit: -1  # unlimited
+      storage-mb: 10240  # 10 GB
+    enterprise:
+      price-monthly: 49.99
+      price-yearly: 499.99
+      courses-limit: -1
+      storage-mb: -1

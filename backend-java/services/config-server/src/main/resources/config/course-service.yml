@@ -1,0 +1,30 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms_courses}
+    username: ${DB_USER:lms_user}
+    password: ${DB_PASSWORD:lms_password}
+
+# Course service specific settings
+course:
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+  video:
+    max-size-mb: 500
+    allowed-formats: mp4,webm,mov
+  cache:
+    courses-ttl: 600  # 10 minutes
+    categories-ttl: 3600  # 1 hour
+
+# MinIO configuration
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket:
+    videos: lms-videos
+    thumbnails: lms-thumbnails
+    documents: lms-documents

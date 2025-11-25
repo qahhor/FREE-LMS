@@ -1,0 +1,16 @@
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms_enrollments}
+    username: ${DB_USER:lms_user}
+    password: ${DB_PASSWORD:lms_password}
+
+# Enrollment service specific settings
+enrollment:
+  progress:
+    completion-threshold: 80  # percentage
+  certificate:
+    enabled: true
+    template-path: /templates/certificate.html

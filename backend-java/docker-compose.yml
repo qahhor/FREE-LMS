@@ -1,0 +1,395 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  postgres:
+    image: postgres:16-alpine
+    container_name: lms-postgres
+    environment:
+      POSTGRES_USER: lms_user
+      POSTGRES_PASSWORD: lms_password
+      POSTGRES_MULTIPLE_DATABASES: lms_auth,lms_courses,lms_enrollments,lms_payments,lms_notifications,lms_analytics,lms_organizations
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lms-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: lms-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lms-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: lms-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - lms-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: lms-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - lms-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: lms-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - lms-network
+
+  # Spring Cloud Infrastructure
+  service-registry:
+    build:
+      context: ./services/service-registry
+      dockerfile: Dockerfile
+    container_name: lms-service-registry
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - lms-network
+
+  config-server:
+    build:
+      context: ./services/config-server
+      dockerfile: Dockerfile
+    container_name: lms-config-server
+    depends_on:
+      service-registry:
+        condition: service_healthy
+    ports:
+      - "8888:8888"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+    networks:
+      - lms-network
+
+  gateway-service:
+    build:
+      context: ./services/gateway-service
+      dockerfile: Dockerfile
+    container_name: lms-gateway
+    depends_on:
+      - config-server
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  # Business Services
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: lms-auth-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_auth
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  course-service:
+    build:
+      context: ./services/course-service
+      dockerfile: Dockerfile
+    container_name: lms-course-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+      - minio
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_courses
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  enrollment-service:
+    build:
+      context: ./services/enrollment-service
+      dockerfile: Dockerfile
+    container_name: lms-enrollment-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_enrollments
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: lms-payment-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8084:8084"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_payments
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_}
+    networks:
+      - lms-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: lms-notification-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8085:8085"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_notifications
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: lms-analytics-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8086:8086"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_analytics
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+  organization-service:
+    build:
+      context: ./services/organization-service
+      dockerfile: Dockerfile
+    container_name: lms-organization-service
+    depends_on:
+      - config-server
+      - postgres
+      - redis
+      - kafka
+    ports:
+      - "8087:8087"
+    environment:
+      EUREKA_HOST: service-registry
+      EUREKA_PORT: 8761
+      EUREKA_USER: eureka
+      EUREKA_PASSWORD: eureka123
+      CONFIG_HOST: config-server
+      CONFIG_PORT: 8888
+      CONFIG_USER: config
+      CONFIG_PASSWORD: config123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms_organizations
+      DB_USER: lms_user
+      DB_PASSWORD: lms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: kafka:29092
+      JWT_SECRET: your-256-bit-secret-key-here-change-in-production-minimum-32-chars
+    networks:
+      - lms-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  lms-network:
+    driver: bridge

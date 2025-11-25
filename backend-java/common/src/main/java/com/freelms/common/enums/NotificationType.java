@@ -1,0 +1,14 @@
+package com.freelms.common.enums;
+
+public enum NotificationType {
+    COURSE_ENROLLMENT,
+    LESSON_COMPLETED,
+    CERTIFICATE_EARNED,
+    ACHIEVEMENT_UNLOCKED,
+    NEW_COMMENT,
+    ASSIGNMENT_DUE,
+    WEBINAR_REMINDER,
+    SUBSCRIPTION_EXPIRING,
+    COURSE_UPDATE,
+    SYSTEM
+}

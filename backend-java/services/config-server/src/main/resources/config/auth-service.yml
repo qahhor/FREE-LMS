@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms_auth}
+    username: ${DB_USER:lms_user}
+    password: ${DB_PASSWORD:lms_password}
+
+# Auth service specific settings
+auth:
+  password:
+    min-length: 8
+    require-uppercase: true
+    require-lowercase: true
+    require-digit: true
+    require-special: false
+  rate-limit:
+    login:
+      requests: 10
+      period: 300  # 5 minutes
+    register:
+      requests: 5
+      period: 3600  # 1 hour
