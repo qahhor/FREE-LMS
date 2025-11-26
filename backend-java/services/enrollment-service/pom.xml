@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>enrollment-service</artifactId>
-    <name>FREE LMS - Enrollment Service</name>
+    <name>Smartup LMS - Enrollment Service</name>
     <description>Enrollment, Progress and Certificate Management Service</description>
 
     <dependencies>

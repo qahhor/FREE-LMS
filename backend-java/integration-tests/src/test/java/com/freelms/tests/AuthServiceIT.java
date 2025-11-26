@@ -13,7 +13,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * FREE LMS - Auth Service Integration Tests
+ * Smartup LMS - Auth Service Integration Tests
  *
  * Tests authentication, registration, and user management flows.
  */

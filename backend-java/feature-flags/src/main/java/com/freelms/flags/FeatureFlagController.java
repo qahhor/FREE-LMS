@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 /**
- * FREE LMS - Feature Flag REST Controller
+ * Smartup LMS - Feature Flag REST Controller
  *
  * API for evaluating and managing feature flags.
  */

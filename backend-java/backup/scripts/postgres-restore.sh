@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# FREE LMS - PostgreSQL Restore Script
+# Smartup LMS - PostgreSQL Restore Script
 # Restore database from backup
 # ============================================================================
 
@@ -36,7 +36,7 @@ usage() {
     cat << EOF
 Usage: $(basename "$0") [OPTIONS] <backup_file>
 
-Restore FREE LMS PostgreSQL database from backup file.
+Restore Smartup LMS PostgreSQL database from backup file.
 
 OPTIONS:
     -h, --help              Show this help message
@@ -138,7 +138,7 @@ main() {
     mkdir -p "$(dirname "$LOG_FILE")"
 
     log_info "=========================================="
-    log_info "FREE LMS PostgreSQL Restore"
+    log_info "Smartup LMS PostgreSQL Restore"
     log_info "=========================================="
     log_info "Backup file: $backup_file"
     log_info "Target database: $target_db"

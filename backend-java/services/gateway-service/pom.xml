@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>gateway-service</artifactId>
-    <name>FREE LMS - API Gateway</name>
+    <name>Smartup LMS - API Gateway</name>
     <description>API Gateway with Spring Cloud Gateway</description>
 
     <dependencies>

@@ -17,7 +17,7 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
-    @Value("${spring.application.name:FREE LMS Service}")
+    @Value("${spring.application.name:Smartup LMS Service}")
     private String applicationName;
 
     @Bean
@@ -26,9 +26,9 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title(applicationName + " API")
                         .version("1.0.0")
-                        .description("FREE LMS - Enterprise Learning Management System API")
+                        .description("Smartup LMS - Enterprise Learning Management System API")
                         .contact(new Contact()
-                                .name("FREE LMS Team")
+                                .name("Smartup LMS Team")
                                 .email("support@freelms.com"))
                         .license(new License()
                                 .name("MIT License")

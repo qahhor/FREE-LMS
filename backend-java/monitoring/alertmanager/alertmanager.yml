@@ -1,5 +1,5 @@
 # ============================================================================
-# FREE LMS - Alertmanager Configuration
+# Smartup LMS - Alertmanager Configuration
 # Alert routing and notification configuration
 # ============================================================================
 
@@ -104,7 +104,7 @@ receivers:
       - to: 'oncall@freelms.com, devops-lead@freelms.com'
         send_resolved: true
         headers:
-          Subject: '[CRITICAL] {{ .GroupLabels.alertname }} - FREE LMS'
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }} - Smartup LMS'
     slack_configs:
       - channel: '#alerts-critical'
         send_resolved: true
@@ -127,7 +127,7 @@ receivers:
       - to: 'devops@freelms.com'
         send_resolved: true
         headers:
-          Subject: '[WARNING] {{ .GroupLabels.alertname }} - FREE LMS'
+          Subject: '[WARNING] {{ .GroupLabels.alertname }} - Smartup LMS'
     slack_configs:
       - channel: '#alerts-warning'
         send_resolved: true
@@ -154,7 +154,7 @@ receivers:
       - to: 'security@freelms.com'
         send_resolved: true
         headers:
-          Subject: '[SECURITY] {{ .GroupLabels.alertname }} - FREE LMS'
+          Subject: '[SECURITY] {{ .GroupLabels.alertname }} - Smartup LMS'
     slack_configs:
       - channel: '#alerts-security'
         send_resolved: true
@@ -166,7 +166,7 @@ receivers:
       - to: 'payments@freelms.com, finance@freelms.com'
         send_resolved: true
         headers:
-          Subject: '[PAYMENT ALERT] {{ .GroupLabels.alertname }} - FREE LMS'
+          Subject: '[PAYMENT ALERT] {{ .GroupLabels.alertname }} - Smartup LMS'
     slack_configs:
       - channel: '#alerts-payments'
         send_resolved: true

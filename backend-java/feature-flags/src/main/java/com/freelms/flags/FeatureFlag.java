@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FREE LMS - Feature Flag Entity
+ * Smartup LMS - Feature Flag Entity
  *
  * Represents a feature flag with targeting rules and rollout configuration.
  */

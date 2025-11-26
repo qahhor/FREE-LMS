@@ -5,7 +5,7 @@ import io.gatling.http.Predef._
 import scala.concurrent.duration._
 
 /**
- * FREE LMS Load Testing Suite
+ * Smartup LMS Load Testing Suite
  *
  * Target metrics:
  * - Clients: 200

@@ -1,5 +1,5 @@
 # ============================================================================
-# FREE LMS - Namespace with Istio Sidecar Injection
+# Smartup LMS - Namespace with Istio Sidecar Injection
 # ============================================================================
 apiVersion: v1
 kind: Namespace

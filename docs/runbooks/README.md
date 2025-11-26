@@ -1,6 +1,6 @@
-# FREE LMS - Operations Runbooks
+# Smartup LMS - Operations Runbooks
 
-This directory contains operational runbooks for managing the FREE LMS platform.
+This directory contains operational runbooks for managing the Smartup LMS platform.
 
 ## Quick Links
 

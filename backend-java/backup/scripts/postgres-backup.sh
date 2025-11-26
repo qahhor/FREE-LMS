@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# FREE LMS - PostgreSQL Backup Script
+# Smartup LMS - PostgreSQL Backup Script
 # Automated backup for production database
 # Target: 200 clients, 100,000 users
 # ============================================================================
@@ -72,10 +72,10 @@ send_notification() {
             -d "{
                 \"attachments\": [{
                     \"color\": \"$color\",
-                    \"title\": \"FREE LMS PostgreSQL Backup - ${status^^}\",
+                    \"title\": \"Smartup LMS PostgreSQL Backup - ${status^^}\",
                     \"text\": \"$message\",
                     \"fields\": [{\"title\": \"Details\", \"value\": \"$details\", \"short\": false}],
-                    \"footer\": \"FREE LMS Backup System\",
+                    \"footer\": \"Smartup LMS Backup System\",
                     \"ts\": $(date +%s)
                 }]
             }" || true
@@ -83,7 +83,7 @@ send_notification() {
 
     # Email notification
     if [[ -n "$EMAIL_TO" ]]; then
-        echo -e "Subject: FREE LMS Backup - ${status^^}\n\n$message\n\nDetails:\n$details" | \
+        echo -e "Subject: Smartup LMS Backup - ${status^^}\n\n$message\n\nDetails:\n$details" | \
             sendmail "$EMAIL_TO" || true
     fi
 }
@@ -239,7 +239,7 @@ verify_backup() {
 
 main() {
     log_info "=========================================="
-    log_info "FREE LMS PostgreSQL Backup Starting"
+    log_info "Smartup LMS PostgreSQL Backup Starting"
     log_info "=========================================="
     log_info "Database: $DB_HOST:$DB_PORT/$DB_NAME"
     log_info "Backup directory: $BACKUP_DIR"

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# FREE LMS - Redis Backup Script
+# Smartup LMS - Redis Backup Script
 # Automated backup for Redis cache and sessions
 # ============================================================================
 
@@ -57,9 +57,9 @@ send_notification() {
             -d "{
                 \"attachments\": [{
                     \"color\": \"$color\",
-                    \"title\": \"FREE LMS Redis Backup - ${status^^}\",
+                    \"title\": \"Smartup LMS Redis Backup - ${status^^}\",
                     \"text\": \"$message\",
-                    \"footer\": \"FREE LMS Backup System\"
+                    \"footer\": \"Smartup LMS Backup System\"
                 }]
             }" || true
     fi
@@ -91,7 +91,7 @@ upload_to_cloud() {
 
 main() {
     log_info "=========================================="
-    log_info "FREE LMS Redis Backup Starting"
+    log_info "Smartup LMS Redis Backup Starting"
     log_info "=========================================="
 
     mkdir -p "$BACKUP_DIR"

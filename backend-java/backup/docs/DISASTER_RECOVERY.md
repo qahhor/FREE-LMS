@@ -1,8 +1,8 @@
-# FREE LMS - Disaster Recovery Plan
+# Smartup LMS - Disaster Recovery Plan
 
 ## Overview
 
-This document outlines the disaster recovery procedures for FREE LMS platform designed for **200 clients** and **100,000 users**.
+This document outlines the disaster recovery procedures for Smartup LMS platform designed for **200 clients** and **100,000 users**.
 
 ### Recovery Objectives
 

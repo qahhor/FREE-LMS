@@ -1,4 +1,4 @@
-// FREE LMS Service Worker
+// Smartup LMS Service Worker
 // Version 1.0.0
 
 const CACHE_NAME = 'free-lms-v1';
@@ -161,7 +161,7 @@ self.addEventListener('push', (event) => {
   console.log('[ServiceWorker] Push notification received', event);
 
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'FREE LMS';
+  const title = data.title || 'Smartup LMS';
   const options = {
     body: data.body || 'У вас новое уведомление',
     icon: '/assets/icons/icon-192x192.png',

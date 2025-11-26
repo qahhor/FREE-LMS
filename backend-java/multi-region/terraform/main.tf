@@ -1,5 +1,5 @@
 # ============================================================================
-# FREE LMS - Multi-Region Infrastructure
+# Smartup LMS - Multi-Region Infrastructure
 # Terraform configuration for multi-region deployment
 # ============================================================================
 

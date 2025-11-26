@@ -1,7 +1,7 @@
 # Runbook: Service Restart
 
 ## Overview
-Procedures for restarting FREE LMS microservices safely.
+Procedures for restarting Smartup LMS microservices safely.
 
 ## When to Use
 - Service is unresponsive

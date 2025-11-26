@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * FREE LMS - Base Integration Test Class
+ * Smartup LMS - Base Integration Test Class
  *
  * Provides common setup and utilities for all integration tests.
  */

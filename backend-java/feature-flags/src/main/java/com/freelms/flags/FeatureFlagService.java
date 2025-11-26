@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
- * FREE LMS - Feature Flag Service
+ * Smartup LMS - Feature Flag Service
  *
  * Evaluates feature flags with support for:
  * - Boolean, string, number, and JSON flags

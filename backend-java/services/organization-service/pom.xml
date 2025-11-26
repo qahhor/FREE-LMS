@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>organization-service</artifactId>
-    <name>FREE LMS - Organization Service</name>
+    <name>Smartup LMS - Organization Service</name>
     <description>Multi-tenancy, SSO, SCORM and Webinar Service</description>
 
     <dependencies>

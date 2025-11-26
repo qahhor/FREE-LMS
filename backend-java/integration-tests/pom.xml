@@ -9,8 +9,8 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>FREE LMS Integration Tests</name>
-    <description>End-to-end and integration tests for FREE LMS platform</description>
+    <name>Smartup LMS Integration Tests</name>
+    <description>End-to-end and integration tests for Smartup LMS platform</description>
 
     <properties>
         <java.version>21</java.version>

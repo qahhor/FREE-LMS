@@ -20,7 +20,7 @@ import { PwaService } from '../../../core/services/pwa.service';
       <div class="pwa-banner-content">
         <mat-icon class="pwa-icon">install_mobile</mat-icon>
         <div class="pwa-text">
-          <h3>Установите FREE LMS</h3>
+          <h3>Установите Smartup LMS</h3>
           <p>Быстрый доступ и работа офлайн</p>
         </div>
       </div>

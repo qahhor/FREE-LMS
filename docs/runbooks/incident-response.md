@@ -1,7 +1,7 @@
 # Runbook: Incident Response
 
 ## Overview
-Structured approach to handling production incidents for FREE LMS.
+Structured approach to handling production incidents for Smartup LMS.
 
 ---
 

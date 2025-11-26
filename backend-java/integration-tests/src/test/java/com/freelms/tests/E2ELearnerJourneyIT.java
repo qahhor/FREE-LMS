@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * FREE LMS - End-to-End Learner Journey Tests
+ * Smartup LMS - End-to-End Learner Journey Tests
  *
  * Tests complete user workflows from registration to course completion.
  * Validates the entire learning experience across multiple services.

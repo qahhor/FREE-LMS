@@ -20,7 +20,7 @@ const languages = {
 // Translations
 const translations = {
   en: {
-    welcome: 'Welcome to FREE LMS! 🎓\n\nChoose a language to continue:',
+    welcome: 'Welcome to Smartup LMS! 🎓\n\nChoose a language to continue:',
     main_menu: 'Main Menu',
     my_courses: 'My Courses',
     browse_courses: 'Browse Courses',
@@ -29,7 +29,7 @@ const translations = {
     language: 'Change Language'
   },
   ru: {
-    welcome: 'Добро пожаловать в FREE LMS! 🎓\n\nВыберите язык:',
+    welcome: 'Добро пожаловать в Smartup LMS! 🎓\n\nВыберите язык:',
     main_menu: 'Главное меню',
     my_courses: 'Мои курсы',
     browse_courses: 'Обзор курсов',
@@ -38,7 +38,7 @@ const translations = {
     language: 'Изменить язык'
   },
   uz: {
-    welcome: 'FREE LMS ga xush kelibsiz! 🎓\n\nTilni tanlang:',
+    welcome: 'Smartup LMS ga xush kelibsiz! 🎓\n\nTilni tanlang:',
     main_menu: 'Asosiy menyu',
     my_courses: 'Mening kurslarim',
     browse_courses: 'Kurslarni ko\'rish',
@@ -144,7 +144,7 @@ bot.hears(/browse courses|обзор курсов|kurslarni ko'rish/i, async (ct
 // Help command
 bot.command('help', (ctx) => {
   const helpText = `
-🤖 FREE LMS Bot Help
+🤖 Smartup LMS Bot Help
 
 Available commands:
 /start - Start the bot and select language

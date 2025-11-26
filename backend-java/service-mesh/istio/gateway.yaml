@@ -1,5 +1,5 @@
 # ============================================================================
-# FREE LMS - Istio Gateway Configuration
+# Smartup LMS - Istio Gateway Configuration
 # Main entry point for external traffic
 # ============================================================================
 apiVersion: networking.istio.io/v1beta1

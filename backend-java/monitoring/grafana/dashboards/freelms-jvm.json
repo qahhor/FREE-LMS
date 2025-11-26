@@ -1,6 +1,6 @@
 {
   "annotations": { "list": [] },
-  "description": "FREE LMS - JVM Performance Metrics for Spring Boot Services",
+  "description": "Smartup LMS - JVM Performance Metrics for Spring Boot Services",
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
@@ -313,7 +313,7 @@
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "FREE LMS - JVM Performance",
+  "title": "Smartup LMS - JVM Performance",
   "uid": "freelms-jvm",
   "version": 1
 }

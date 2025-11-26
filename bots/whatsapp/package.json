@@ -1,7 +1,7 @@
 {
   "name": "lms-whatsapp-bot",
   "version": "1.0.0",
-  "description": "WhatsApp Bot for FREE LMS",
+  "description": "WhatsApp Bot for Smartup LMS",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "keywords": ["whatsapp", "bot", "lms", "education"],
-  "author": "FREE LMS Team",
+  "author": "Smartup LMS Team",
   "license": "MIT",
   "dependencies": {
     "whatsapp-web.js": "^1.23.0",

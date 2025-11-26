@@ -1,4 +1,4 @@
-# FREE LMS - Multi-Region Deployment
+# Smartup LMS - Multi-Region Deployment
 
 ## Overview
 

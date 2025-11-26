@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.concurrent.TimeUnit;
 
 /**
- * FREE LMS - Distributed Tracing Configuration
+ * Smartup LMS - Distributed Tracing Configuration
  *
  * Configures OpenTelemetry for distributed tracing across all microservices.
  * Integrates with Jaeger for trace visualization and analysis.
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * - Kafka message tracing
  * - Custom span attributes for business context
  *
- * @author FREE LMS Team
+ * @author Smartup LMS Team
  */
 @Configuration
 public class TracingConfig {

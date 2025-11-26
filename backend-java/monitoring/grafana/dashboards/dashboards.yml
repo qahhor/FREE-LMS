@@ -1,13 +1,13 @@
 # ============================================================================
-# FREE LMS - Grafana Dashboard Provisioning
+# Smartup LMS - Grafana Dashboard Provisioning
 # ============================================================================
 
 apiVersion: 1
 
 providers:
-  - name: 'FREE LMS Dashboards'
+  - name: 'Smartup LMS Dashboards'
     orgId: 1
-    folder: 'FREE LMS'
+    folder: 'Smartup LMS'
     folderUid: 'freelms'
     type: file
     disableDeletion: false

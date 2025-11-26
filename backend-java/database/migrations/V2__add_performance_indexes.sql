@@ -1,5 +1,5 @@
 -- =====================================================
--- FREE LMS - Performance Optimization Indexes
+-- Smartup LMS - Performance Optimization Indexes
 -- Version: 2.0
 -- Target: 100,000 users, 1000 concurrent users
 -- =====================================================

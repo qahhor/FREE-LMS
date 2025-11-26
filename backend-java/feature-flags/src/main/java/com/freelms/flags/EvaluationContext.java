@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * FREE LMS - Feature Flag Evaluation Context
+ * Smartup LMS - Feature Flag Evaluation Context
  *
  * Contains user and environment information for flag evaluation.
  */

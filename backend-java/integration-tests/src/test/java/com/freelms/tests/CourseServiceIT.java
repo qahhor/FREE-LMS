@@ -10,7 +10,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * FREE LMS - Course Service Integration Tests
+ * Smartup LMS - Course Service Integration Tests
  *
  * Tests course creation, management, and content operations.
  */

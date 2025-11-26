@@ -1,4 +1,4 @@
-# FREE LMS - Feature Flags
+# Smartup LMS - Feature Flags
 
 Feature flag system for controlled feature rollouts and A/B testing.
 

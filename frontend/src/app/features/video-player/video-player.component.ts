@@ -272,7 +272,7 @@ export class VideoPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() videoId!: number;
   @Input() enrollmentId?: number;
   @Input() showWatermark = true;
-  @Input() watermarkText = 'FREE LMS';
+  @Input() watermarkText = 'Smartup LMS';
   @Output() completed = new EventEmitter<void>();
   @Output() progress = new EventEmitter<number>();
 

@@ -38,7 +38,7 @@ client.on('message', async (message) => {
   // Help command
   if (text === 'help' || text === 'помощь' || text === 'yordam') {
     await message.reply(`
-🤖 *FREE LMS WhatsApp Bot*
+🤖 *Smartup LMS WhatsApp Bot*
 
 Available commands:
 • *courses* - Browse available courses
@@ -99,7 +99,7 @@ Reply *courses* to browse more courses!
     await message.reply(`
 📝 *Registration*
 
-To register for FREE LMS:
+To register for Smartup LMS:
 
 1. Visit: https://your-lms-domain.com
 2. Click "Sign Up"
@@ -129,7 +129,7 @@ https://your-lms-domain.com
 
   // Default response
   await message.reply(`
-👋 Hello! I'm the FREE LMS bot.
+👋 Hello! I'm the Smartup LMS bot.
 
 Type *help* to see available commands.
 

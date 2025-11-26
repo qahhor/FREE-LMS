@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>payment-service</artifactId>
-    <name>FREE LMS - Payment Service</name>
+    <name>Smartup LMS - Payment Service</name>
     <description>Payment and Subscription Management Service</description>
 
     <dependencies>

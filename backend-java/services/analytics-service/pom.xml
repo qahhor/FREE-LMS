@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>analytics-service</artifactId>
-    <name>FREE LMS - Analytics Service</name>
+    <name>Smartup LMS - Analytics Service</name>
     <description>Analytics, Recommendations and Smart Search Service</description>
 
     <dependencies>

@@ -1,5 +1,5 @@
 # ============================================================================
-# FREE LMS - Istio Rate Limiting Configuration
+# Smartup LMS - Istio Rate Limiting Configuration
 # Global rate limiting using Envoy filters
 # ============================================================================
 

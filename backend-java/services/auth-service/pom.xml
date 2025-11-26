@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>auth-service</artifactId>
-    <name>FREE LMS - Auth Service</name>
+    <name>Smartup LMS - Auth Service</name>
     <description>Authentication and User Management Service</description>
 
     <dependencies>

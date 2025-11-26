@@ -1,5 +1,5 @@
 # =====================================================
-# FREE LMS - Multi-stage Docker Build
+# Smartup LMS - Multi-stage Docker Build
 # Optimized for production deployment
 # =====================================================
 

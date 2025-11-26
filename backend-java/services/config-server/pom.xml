@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>config-server</artifactId>
-    <name>FREE LMS - Config Server</name>
+    <name>Smartup LMS - Config Server</name>
     <description>Centralized Configuration Server</description>
 
     <dependencies>

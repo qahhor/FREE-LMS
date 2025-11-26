@@ -108,7 +108,7 @@ import { Invoice } from '../models/payment.models';
             <div class="invoice-preview">
               <div class="preview-header">
                 <div class="company-info">
-                  <h2>FREE LMS</h2>
+                  <h2>Smartup LMS</h2>
                   <p>Платформа онлайн-обучения</p>
                 </div>
                 <div class="invoice-meta">

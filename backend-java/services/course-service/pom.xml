@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>course-service</artifactId>
-    <name>FREE LMS - Course Service</name>
+    <name>Smartup LMS - Course Service</name>
     <description>Course Management Service</description>
 
     <dependencies>

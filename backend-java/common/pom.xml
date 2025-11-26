@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>free-lms-common</artifactId>
-    <name>FREE LMS - Common</name>
+    <name>Smartup LMS - Common</name>
     <description>Common utilities, DTOs, and shared components</description>
 
     <dependencies>

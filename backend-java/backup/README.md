@@ -1,6 +1,6 @@
-# FREE LMS - Backup & Recovery System
+# Smartup LMS - Backup & Recovery System
 
-Automated backup and disaster recovery system for FREE LMS platform.
+Automated backup and disaster recovery system for Smartup LMS platform.
 
 ## Quick Start
 

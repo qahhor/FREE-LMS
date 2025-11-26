@@ -446,12 +446,12 @@ export class PaymentSuccessComponent implements OnInit {
   }
 
   shareToTelegram() {
-    const text = encodeURIComponent('Я подписался на FREE LMS! Присоединяйтесь!');
+    const text = encodeURIComponent('Я подписался на Smartup LMS! Присоединяйтесь!');
     window.open(`https://t.me/share/url?url=${window.location.origin}&text=${text}`, '_blank');
   }
 
   shareToWhatsApp() {
-    const text = encodeURIComponent('Я подписался на FREE LMS! Присоединяйтесь!');
+    const text = encodeURIComponent('Я подписался на Smartup LMS! Присоединяйтесь!');
     window.open(`https://wa.me/?text=${text} ${window.location.origin}`, '_blank');
   }
 

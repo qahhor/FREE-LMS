@@ -1,6 +1,6 @@
-# Contributing to FREE LMS
+# Contributing to Smartup LMS
 
-Спасибо за интерес к участию в разработке FREE LMS! Этот документ поможет вам начать.
+Спасибо за интерес к участию в разработке Smartup LMS! Этот документ поможет вам начать.
 
 ## 📋 Содержание
 
@@ -73,11 +73,11 @@
 # 1. Fork репозитория на GitHub
 
 # 2. Клонируйте свой fork
-git clone https://github.com/YOUR_USERNAME/FREE_LMS.git
-cd FREE_LMS
+git clone https://github.com/YOUR_USERNAME/smartup-lms.git
+cd smartup-lms
 
 # 3. Добавьте upstream
-git remote add upstream https://github.com/original/FREE_LMS.git
+git remote add upstream https://github.com/original/smartup-lms.git
 
 # 4. Создайте ветку для работы
 git checkout -b feature/my-feature
@@ -96,7 +96,7 @@ mvn test
 ### Структура проекта
 
 ```
-FREE_LMS/
+smartup-lms/
 ├── backend-java/                 # Java Spring Boot Backend
 │   ├── common/                   # Общая библиотека
 │   ├── services/                 # 20 микросервисов
@@ -346,7 +346,7 @@ cd services/auth-service && mvn spring-boot:run
 
 - 💬 GitHub Discussions — вопросы и обсуждения
 - 🐛 GitHub Issues — баги и предложения
-- 📧 Email: contributors@freelms.io
+- 📧 Email: contributors@smartup.uz
 
 ---
 
@@ -356,4 +356,4 @@ cd services/auth-service && mvn spring-boot:run
 
 ---
 
-**Спасибо за ваш вклад в FREE LMS! 🎉**
+**Спасибо за ваш вклад в Smartup LMS! 🎉**
