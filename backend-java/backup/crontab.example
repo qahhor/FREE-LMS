@@ -1,0 +1,52 @@
+# ============================================================================
+# FREE LMS - Backup Cron Schedule
+# Copy this to /etc/cron.d/freelms-backup or add to system crontab
+# ============================================================================
+
+# Environment variables
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=devops@freelms.com
+
+# PostgreSQL configuration
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=freelms
+POSTGRES_DB=freelms
+
+# Redis configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Backup directory
+BACKUP_DIR=/var/backups/freelms
+
+# Cloud storage (optional)
+S3_BUCKET=freelms-backups-primary
+S3_REGION=us-east-1
+
+# Notification
+SLACK_WEBHOOK=https://hooks.slack.com/services/xxx/xxx/xxx
+
+# =============================================================================
+# Backup Schedule
+# =============================================================================
+
+# PostgreSQL daily backup at 02:00 UTC
+0 2 * * * root /opt/freelms/backup/scripts/postgres-backup.sh >> /var/log/freelms/cron-postgres.log 2>&1
+
+# Redis backup every 6 hours
+0 */6 * * * root /opt/freelms/backup/scripts/redis-backup.sh >> /var/log/freelms/cron-redis.log 2>&1
+
+# Backup verification at 06:00 UTC
+0 6 * * * root /opt/freelms/backup/scripts/verify-backups.sh >> /var/log/freelms/cron-verify.log 2>&1
+
+# Cleanup old logs weekly
+0 3 * * 0 root find /var/log/freelms -name "*.log" -mtime +30 -delete
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+
+# Health check every 5 minutes
+*/5 * * * * root /opt/freelms/monitoring/health-check.sh >> /var/log/freelms/health-check.log 2>&1

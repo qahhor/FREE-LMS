@@ -1,0 +1,440 @@
+# ============================================================================
+# FREE LMS - Prometheus Alert Rules
+# Critical alerts for 200 clients, 100,000 users production environment
+# ============================================================================
+
+groups:
+  # ===========================================================================
+  # Service Health Alerts
+  # ===========================================================================
+  - name: service_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: ServiceHighRestartRate
+        expr: increase(process_uptime_seconds[1h]) < 3600
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Service {{ $labels.job }} restarting frequently"
+          description: "{{ $labels.job }} has restarted in the last hour."
+
+      - alert: ServiceUnhealthy
+        expr: spring_boot_health_status{status!="UP"} == 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.service }} health check failing"
+          description: "{{ $labels.service }} health status is {{ $labels.status }}."
+
+  # ===========================================================================
+  # Response Time & Latency Alerts
+  # ===========================================================================
+  - name: latency_alerts
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, service)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time on {{ $labels.service }}"
+          description: "95th percentile response time is {{ $value }}s (threshold: 500ms)"
+
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, service)) > 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical response time on {{ $labels.service }}"
+          description: "95th percentile response time is {{ $value }}s (threshold: 2s)"
+
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, service)) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Very high request latency on {{ $labels.service }}"
+          description: "99th percentile latency is {{ $value }}s"
+
+  # ===========================================================================
+  # Error Rate Alerts
+  # ===========================================================================
+  - name: error_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+
+      - alert: CriticalErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical error rate on {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      - alert: High4xxErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"4.."}[5m])) by (service)
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          > 0.10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 4xx error rate on {{ $labels.service }}"
+          description: "4xx error rate is {{ $value | humanizePercentage }}"
+
+  # ===========================================================================
+  # Resource Usage Alerts
+  # ===========================================================================
+  - name: resource_alerts
+    rules:
+      - alert: HighCpuUsage
+        expr: process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.service }}"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+
+      - alert: CriticalCpuUsage
+        expr: process_cpu_usage > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.service }}"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.service }}"
+          description: "Heap memory usage is {{ $value | humanizePercentage }}"
+
+      - alert: CriticalMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical memory usage on {{ $labels.service }}"
+          description: "Heap memory usage is {{ $value | humanizePercentage }}"
+
+      - alert: HighGCPause
+        expr: rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause time on {{ $labels.service }}"
+          description: "Average GC pause is {{ $value }}s"
+
+  # ===========================================================================
+  # Database Alerts
+  # ===========================================================================
+  - name: database_alerts
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance has been down for more than 1 minute"
+
+      - alert: PostgresHighConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL high connection usage"
+          description: "Connection usage is {{ $value | humanizePercentage }}"
+
+      - alert: PostgresCriticalConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL critical connection usage"
+          description: "Connection usage is {{ $value | humanizePercentage }}"
+
+      - alert: PostgresSlowQueries
+        expr: rate(pg_stat_statements_seconds_total[5m]) / rate(pg_stat_statements_calls_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "Average query time is {{ $value }}s"
+
+      - alert: PostgresDeadlocks
+        expr: increase(pg_stat_database_deadlocks[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL deadlocks detected"
+          description: "{{ $value }} deadlocks in the last 5 minutes"
+
+      - alert: PostgresReplicationLag
+        expr: pg_replication_lag_seconds > 30
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL replication lag"
+          description: "Replication lag is {{ $value }}s"
+
+      - alert: HikariPoolExhausted
+        expr: hikaricp_connections_active / hikaricp_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HikariCP connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of connections in use on {{ $labels.service }}"
+
+  # ===========================================================================
+  # Redis Alerts
+  # ===========================================================================
+  - name: redis_alerts
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance has been down for more than 1 minute"
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      - alert: RedisHighConnectionCount
+        expr: redis_connected_clients > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high connection count"
+          description: "{{ $value }} connected clients"
+
+      - alert: RedisRejectedConnections
+        expr: increase(redis_rejected_connections_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis rejecting connections"
+          description: "{{ $value }} connections rejected in last 5 minutes"
+
+  # ===========================================================================
+  # Kafka Alerts
+  # ===========================================================================
+  - name: kafka_alerts
+    rules:
+      - alert: KafkaBrokerDown
+        expr: kafka_brokers < 3
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka broker down"
+          description: "Only {{ $value }} brokers available (expected: 3)"
+
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_group_lag > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag high"
+          description: "Consumer group {{ $labels.group }} has lag of {{ $value }}"
+
+      - alert: KafkaCriticalConsumerLag
+        expr: kafka_consumer_group_lag > 100000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka consumer lag critical"
+          description: "Consumer group {{ $labels.group }} has lag of {{ $value }}"
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_topic_partition_under_replicated_partition > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka under-replicated partitions"
+          description: "Topic {{ $labels.topic }} has under-replicated partitions"
+
+  # ===========================================================================
+  # Rate Limiting Alerts
+  # ===========================================================================
+  - name: rate_limiting_alerts
+    rules:
+      - alert: HighRateLimitRejections
+        expr: increase(rate_limit_rejected_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limit rejections on {{ $labels.service }}"
+          description: "{{ $value }} requests rejected in last 5 minutes"
+
+      - alert: PossibleDDoSAttack
+        expr: increase(rate_limit_rejected_total[1m]) > 1000
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Possible DDoS attack detected"
+          description: "{{ $value }} requests rejected in last minute on {{ $labels.service }}"
+
+  # ===========================================================================
+  # Authentication Alerts
+  # ===========================================================================
+  - name: auth_alerts
+    rules:
+      - alert: HighAuthenticationFailures
+        expr: increase(authentication_failures_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value }} authentication failures in last 5 minutes"
+
+      - alert: PossibleBruteForceAttack
+        expr: increase(authentication_failures_total[1m]) > 50
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Possible brute force attack detected"
+          description: "{{ $value }} authentication failures in last minute"
+
+      - alert: JWTValidationErrors
+        expr: increase(jwt_validation_errors_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JWT validation errors increasing"
+          description: "{{ $value }} JWT validation errors in last 5 minutes"
+
+  # ===========================================================================
+  # Business Metrics Alerts
+  # ===========================================================================
+  - name: business_alerts
+    rules:
+      - alert: NoEnrollmentsCreated
+        expr: increase(enrollments_created_total[1h]) == 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "No new enrollments in the last hour"
+          description: "Business metric: Zero enrollments created"
+
+      - alert: PaymentFailureRateHigh
+        expr: |
+          sum(rate(payments_failed_total[5m]))
+          /
+          sum(rate(payments_total[5m]))
+          > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High payment failure rate"
+          description: "Payment failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: NotificationDeliveryFailure
+        expr: |
+          sum(rate(notifications_failed_total[5m]))
+          /
+          sum(rate(notifications_sent_total[5m]))
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Notification delivery failure rate high"
+          description: "Failure rate is {{ $value | humanizePercentage }}"
+
+  # ===========================================================================
+  # Disk & Storage Alerts
+  # ===========================================================================
+  - name: storage_alerts
+    rules:
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.mountpoint }}"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical disk space on {{ $labels.mountpoint }}"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+
+      - alert: PostgresDiskSpaceLow
+        expr: pg_database_size_bytes / (50 * 1024 * 1024 * 1024) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL database size growing"
+          description: "Database {{ $labels.datname }} is at {{ $value | humanizePercentage }} of 50GB limit"
