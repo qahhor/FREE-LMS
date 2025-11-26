@@ -1,119 +1,288 @@
-# Security Policy
+# Security Policy — FREE LMS
 
-## Supported Versions
+## 🛡️ Поддерживаемые версии
 
-Currently being supported with security updates:
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-
-## Security Features
-
-### Authentication & Authorization
-- JWT-based authentication
-- Refresh token rotation
-- Password hashing with bcrypt (10 rounds)
-- Role-Based Access Control (RBAC)
-- Session management
-
-### Data Protection
-- HTTPS/TLS encryption in transit
-- Database encryption at rest (PostgreSQL)
-- Sensitive data masking in logs
-- Secure environment variable management
-- CORS configuration
-
-### API Security
-- Rate limiting (10 requests per minute per IP)
-- Input validation and sanitization
-- SQL injection prevention (TypeORM parameterized queries)
-- XSS prevention (Content Security Policy)
-- CSRF protection
-- Helmet.js security headers
-
-### File Upload Security
-- File type validation
-- File size limits (100MB max)
-- Virus scanning (recommended)
-- Secure file storage (MinIO/S3)
-- Signed URLs for downloads
-
-### Dependency Security
-- Regular dependency updates
-- Automated vulnerability scanning
-- NPM audit checks
-- Dependabot integration
-
-## Reporting a Vulnerability
-
-**Please do not report security vulnerabilities through public GitHub issues.**
-
-Instead, please report them via email to: security@freelms.org
-
-You should receive a response within 48 hours. If the issue is confirmed, we will:
-
-1. Acknowledge receipt of your vulnerability report
-2. Investigate and validate the vulnerability
-3. Develop and test a fix
-4. Release a security patch
-5. Publicly disclose the vulnerability
-
-## Security Best Practices for Deployment
-
-### Environment Variables
-- Never commit `.env` files
-- Use strong, random secrets for JWT_SECRET
-- Rotate secrets regularly
-- Use environment-specific configurations
-
-### Database Security
-- Use strong database passwords
-- Enable SSL/TLS for database connections
-- Regular backups
-- Limit database access by IP
-- Use read-only users where possible
-
-### Docker Security
-- Use official base images
-- Run containers as non-root user
-- Scan images for vulnerabilities
-- Keep images updated
-- Use Docker secrets for sensitive data
-
-### Network Security
-- Use firewall rules
-- Enable HTTPS only
-- Use VPN for internal services
-- Implement DDoS protection
-- Monitor for suspicious activity
-
-### Logging & Monitoring
-- Log all authentication attempts
-- Monitor for unusual patterns
-- Set up alerts for security events
-- Regular security audits
-- Penetration testing
-
-## Compliance
-
-This project aims to comply with:
-
-- GDPR (General Data Protection Regulation)
-- OWASP Top 10 security standards
-- SOC 2 Type II (in progress)
-
-## Security Updates
-
-Subscribe to security announcements:
-- Watch this repository
-- Follow @freelms_security on Twitter
-- Join our security mailing list
-
-## Acknowledgments
-
-We appreciate security researchers who responsibly disclose vulnerabilities. Contributors will be acknowledged (with permission) in our security advisories.
+| Версия | Поддержка |
+|--------|-----------|
+| 2.x.x (Java) | ✅ Активная поддержка |
+| 1.x.x (Legacy) | ⚠️ Только критические патчи |
 
 ---
 
-Last Updated: 2024-01-01
+## 🔐 Функции безопасности
+
+### Аутентификация и авторизация
+
+| Функция | Описание | Статус |
+|---------|----------|--------|
+| JWT Authentication | Access + Refresh токены | ✅ |
+| Token Rotation | Автоматическая ротация refresh токенов | ✅ |
+| Password Hashing | BCrypt (cost factor 10) | ✅ |
+| RBAC | Role-Based Access Control | ✅ |
+| MFA | Multi-Factor Authentication | 🔄 В разработке |
+| OAuth2/OIDC | Внешняя аутентификация | ✅ |
+| LDAP/AD | Корпоративная интеграция | ✅ |
+| SSO | Single Sign-On | ✅ |
+
+### Защита данных
+
+| Функция | Описание | Статус |
+|---------|----------|--------|
+| TLS/HTTPS | Шифрование в транзите | ✅ |
+| Database Encryption | Шифрование PostgreSQL | ✅ |
+| Secrets Management | Kubernetes Secrets / Vault | ✅ |
+| Data Masking | Маскирование в логах | ✅ |
+| CORS | Настраиваемая политика | ✅ |
+| GDPR Compliance | Право на удаление данных | ✅ |
+
+### API Security
+
+| Функция | Описание | Статус |
+|---------|----------|--------|
+| Rate Limiting | 100/1000/5000 req/min по ролям | ✅ |
+| Input Validation | Jakarta Validation + Custom | ✅ |
+| SQL Injection | JPA Parameterized Queries | ✅ |
+| XSS Prevention | Content Security Policy | ✅ |
+| CSRF Protection | Stateless JWT (disabled) | ✅ |
+| Security Headers | HSTS, X-Frame-Options, etc. | ✅ |
+
+### Аудит и мониторинг
+
+| Функция | Описание | Статус |
+|---------|----------|--------|
+| Audit Logging | Все действия пользователей | ✅ |
+| Login Attempts | Отслеживание попыток входа | ✅ |
+| IP Tracking | Логирование IP адресов | ✅ |
+| E-Signatures | Электронные подписи | ✅ |
+| Compliance Reports | GDPR/ФЗ-152 отчёты | ✅ |
+
+---
+
+## 🔧 Конфигурация безопасности
+
+### Production Security Headers
+
+```java
+// ProductionSecurityConfig.java
+http.headers(headers -> headers
+    .contentSecurityPolicy(csp -> csp
+        .policyDirectives("default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: https:; " +
+            "frame-ancestors 'self'")
+    )
+    .referrerPolicy(referrer -> referrer
+        .policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+    )
+    .httpStrictTransportSecurity(hsts -> hsts
+        .includeSubDomains(true)
+        .maxAgeInSeconds(31536000)
+        .preload(true)
+    )
+);
+```
+
+### Rate Limiting
+
+```yaml
+# Конфигурация по ролям
+rate-limit:
+  anonymous: 100    # запросов в минуту
+  user: 1000        # запросов в минуту
+  admin: 5000       # запросов в минуту
+  burst-multiplier: 1.25
+```
+
+### JWT Configuration
+
+```yaml
+jwt:
+  secret: ${JWT_SECRET}  # Минимум 256 бит
+  access-token-expiration: 15m
+  refresh-token-expiration: 7d
+  issuer: freelms.io
+```
+
+---
+
+## 📋 Production Security Checklist
+
+### Перед развертыванием
+
+- [ ] **Secrets**: Сгенерированы криптографически стойкие секреты
+  ```bash
+  openssl rand -base64 32  # JWT Secret
+  openssl rand -base64 24  # DB Password
+  ```
+
+- [ ] **JWT Secret**: Минимум 256 бит, уникальный для каждой среды
+
+- [ ] **Database**:
+  - [ ] Сильные пароли
+  - [ ] SSL/TLS подключения
+  - [ ] Ограничение по IP
+  - [ ] Read-only пользователи где возможно
+
+- [ ] **Network**:
+  - [ ] HTTPS только (redirect HTTP → HTTPS)
+  - [ ] Firewall настроен
+  - [ ] VPN для внутренних сервисов
+  - [ ] DDoS защита
+
+- [ ] **Docker**:
+  - [ ] Non-root пользователь
+  - [ ] Read-only файловая система
+  - [ ] Resource limits
+  - [ ] Security scanning образов
+
+- [ ] **Kubernetes**:
+  - [ ] Network Policies
+  - [ ] Pod Security Policies
+  - [ ] Secrets encryption at rest
+  - [ ] RBAC для кластера
+
+---
+
+## 🚨 Сообщить об уязвимости
+
+### Responsible Disclosure
+
+**НЕ** сообщайте об уязвимостях через публичные GitHub Issues.
+
+**Как сообщить:**
+
+1. 📧 Email: security@freelms.io
+2. 🔐 PGP Key: [Download](https://freelms.io/.well-known/security.txt)
+
+### Что включить в отчёт
+
+```
+Subject: [SECURITY] Brief description
+
+1. Vulnerability Type: (XSS, SQL Injection, Auth Bypass, etc.)
+2. Affected Component: (auth-service, gateway, etc.)
+3. Steps to Reproduce:
+   - Step 1
+   - Step 2
+   - ...
+4. Impact Assessment: (Low/Medium/High/Critical)
+5. Proof of Concept: (if available)
+6. Suggested Fix: (if any)
+```
+
+### SLA ответа
+
+| Severity | Response Time | Fix Time |
+|----------|--------------|----------|
+| Critical | 24 часа | 72 часа |
+| High | 48 часов | 7 дней |
+| Medium | 7 дней | 30 дней |
+| Low | 14 дней | 90 дней |
+
+### Вознаграждение
+
+Мы признаём вклад исследователей безопасности:
+- Упоминание в Hall of Fame
+- Благодарственное письмо
+- Свяжитесь для обсуждения программы bug bounty
+
+---
+
+## 🔍 Известные уязвимости
+
+### Устранённые
+
+| CVE | Severity | Component | Fixed In |
+|-----|----------|-----------|----------|
+| - | - | - | - |
+
+### В процессе исправления
+
+Нет известных уязвимостей.
+
+---
+
+## 📚 Security Best Practices
+
+### Для разработчиков
+
+1. **Input Validation**
+   ```java
+   @PostMapping("/users")
+   public User createUser(@Valid @RequestBody CreateUserRequest request) {
+       // @Valid обеспечивает валидацию
+   }
+   ```
+
+2. **Output Encoding**
+   ```java
+   // Используйте HtmlUtils для пользовательского ввода
+   String safe = HtmlUtils.htmlEscape(userInput);
+   ```
+
+3. **Parameterized Queries**
+   ```java
+   // ✅ Правильно
+   @Query("SELECT u FROM User u WHERE u.email = :email")
+   User findByEmail(@Param("email") String email);
+
+   // ❌ Неправильно
+   @Query("SELECT u FROM User u WHERE u.email = '" + email + "'")
+   ```
+
+4. **Secrets Management**
+   ```java
+   // ✅ Правильно
+   @Value("${jwt.secret}")
+   private String jwtSecret;
+
+   // ❌ Неправильно
+   private String jwtSecret = "hardcoded-secret";
+   ```
+
+### Для операторов
+
+1. **Регулярные обновления**
+   ```bash
+   # Проверка уязвимостей зависимостей
+   mvn dependency-check:check
+   ```
+
+2. **Мониторинг**
+   - Настройте алерты на неудачные входы
+   - Мониторьте rate limiting срабатывания
+   - Отслеживайте аномальный трафик
+
+3. **Backup**
+   - Ежедневные бэкапы БД
+   - Тестирование восстановления
+   - Шифрование бэкапов
+
+---
+
+## 📜 Compliance
+
+### Поддерживаемые стандарты
+
+| Стандарт | Статус | Детали |
+|----------|--------|--------|
+| GDPR | ✅ | Право на удаление, экспорт данных |
+| ФЗ-152 | ✅ | Локализация данных РФ |
+| OWASP Top 10 | ✅ | Все уязвимости адресованы |
+| SOC 2 | 🔄 | В процессе |
+| ISO 27001 | 📋 | Планируется |
+
+---
+
+## 📞 Контакты
+
+- **Security Team**: security@freelms.io
+- **Bug Reports**: GitHub Issues (non-security)
+- **Emergency**: +7-XXX-XXX-XXXX (24/7)
+
+---
+
+**Последнее обновление**: 2024-11-26
+
+**Версия документа**: 2.0
