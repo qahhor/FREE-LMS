@@ -1,0 +1,11 @@
+# ============================================================================
+# FREE LMS - Namespace with Istio Sidecar Injection
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: freelms
+  labels:
+    istio-injection: enabled
+    app.kubernetes.io/name: freelms
+    app.kubernetes.io/part-of: freelms-platform

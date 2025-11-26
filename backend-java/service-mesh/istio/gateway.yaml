@@ -1,0 +1,150 @@
+# ============================================================================
+# FREE LMS - Istio Gateway Configuration
+# Main entry point for external traffic
+# ============================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: freelms-gateway
+  namespace: freelms
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    # HTTPS (Production)
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: freelms-tls-cert
+      hosts:
+        - "api.freelms.com"
+        - "*.freelms.com"
+    # HTTP (Redirect to HTTPS)
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "api.freelms.com"
+        - "*.freelms.com"
+      tls:
+        httpsRedirect: true
+
+---
+# ============================================================================
+# Virtual Service - Main API Routing
+# ============================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: freelms-api
+  namespace: freelms
+spec:
+  hosts:
+    - "api.freelms.com"
+  gateways:
+    - freelms-gateway
+  http:
+    # Auth Service
+    - match:
+        - uri:
+            prefix: /api/auth
+      route:
+        - destination:
+            host: auth-service
+            port:
+              number: 8081
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: connect-failure,refused-stream,unavailable,cancelled,resource-exhausted
+
+    # Course Service
+    - match:
+        - uri:
+            prefix: /api/courses
+      route:
+        - destination:
+            host: course-service
+            port:
+              number: 8082
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+
+    # Enrollment Service
+    - match:
+        - uri:
+            prefix: /api/enrollments
+      route:
+        - destination:
+            host: enrollment-service
+            port:
+              number: 8083
+      timeout: 30s
+
+    # Payment Service
+    - match:
+        - uri:
+            prefix: /api/payments
+      route:
+        - destination:
+            host: payment-service
+            port:
+              number: 8084
+      timeout: 60s  # Longer timeout for payment processing
+
+    # Notification Service
+    - match:
+        - uri:
+            prefix: /api/notifications
+      route:
+        - destination:
+            host: notification-service
+            port:
+              number: 8085
+
+    # Analytics Service
+    - match:
+        - uri:
+            prefix: /api/analytics
+      route:
+        - destination:
+            host: analytics-service
+            port:
+              number: 8086
+
+    # Gamification Service
+    - match:
+        - uri:
+            prefix: /api/gamification
+      route:
+        - destination:
+            host: gamification-service
+            port:
+              number: 8090
+
+    # Feedback Service
+    - match:
+        - uri:
+            prefix: /api/feedback
+      route:
+        - destination:
+            host: feedback-service
+            port:
+              number: 8092
+
+    # Default route to API Gateway
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: api-gateway
+            port:
+              number: 8080

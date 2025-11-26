@@ -1,0 +1,61 @@
+# ============================================================================
+# FREE LMS - Tracing Configuration
+# Add this to your service's application.yml or use as a separate profile
+# ============================================================================
+
+# OpenTelemetry Configuration
+otel:
+  exporter:
+    otlp:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+      protocol: grpc
+  traces:
+    sampler:
+      probability: ${OTEL_TRACES_SAMPLER_PROBABILITY:1.0}
+  resource:
+    attributes:
+      service.name: ${spring.application.name}
+      service.namespace: freelms
+      deployment.environment: ${ENVIRONMENT:development}
+
+# Spring Boot Actuator - Tracing
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACING_SAMPLE_RATE:1.0}
+    propagation:
+      type: w3c
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+
+# Micrometer Tracing
+micrometer:
+  tracing:
+    enabled: true
+
+# Logging with trace correlation
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    io.opentelemetry: INFO
+    io.micrometer.tracing: DEBUG
+
+# Spring Cloud Sleuth (legacy support)
+spring:
+  sleuth:
+    enabled: true
+    sampler:
+      probability: ${TRACING_SAMPLE_RATE:1.0}
+    propagation:
+      type:
+        - W3C
+        - B3
+    baggage:
+      remote-fields:
+        - x-request-id
+        - x-correlation-id
+      correlation-fields:
+        - x-request-id
