@@ -6,7 +6,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.1-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Microservices](https://img.shields.io/badge/Microservices-22-purple)
+![Microservices](https://img.shields.io/badge/Microservices-32-purple)
 
 **Enterprise-grade Learning Management System**
 
@@ -24,7 +24,7 @@ FREE LMS — это современная корпоративная систе
 
 | Показатель | Значение |
 |------------|----------|
-| Микросервисы | 22 |
+| Микросервисы | 32 |
 | Целевые пользователи | 100,000+ |
 | Concurrent users | 1,000+ |
 | Target RPS | 1,000+ |
@@ -99,7 +99,7 @@ FREE LMS — это современная корпоративная систе
 | **Infrastructure** | Docker, Kubernetes, Nginx |
 | **Monitoring** | Prometheus, Grafana, ELK |
 
-### Микросервисы (22)
+### Микросервисы (32)
 
 ```
 ├── Infrastructure (3)
@@ -128,9 +128,21 @@ FREE LMS — это современная корпоративная систе
 │   ├── reporting-service             :8096
 │   └── integration-service           :8097
 │
-└── Platform Services (2)
-    ├── marketplace-service           :8098
-    └── onboarding-service            :8099
+├── Platform Services (2)
+│   ├── marketplace-service           :8098
+│   └── onboarding-service            :8099
+│
+└── Extension Services (10) - NEW
+    ├── search-service                :8100  # Unified search (Elasticsearch)
+    ├── media-processing-service      :8101  # Video transcoding, thumbnails
+    ├── event-service                 :8102  # Webinars, live sessions
+    ├── authoring-service             :8103  # H5P, SCORM content creation
+    ├── proctoring-service            :8104  # AI exam monitoring
+    ├── assignment-review-service     :8105  # Homework review, auto-grading
+    ├── resource-booking-service      :8106  # Rooms, equipment booking
+    ├── audit-logging-service         :8107  # SOC2/GDPR compliance logs
+    ├── lti-service                   :8108  # LTI 1.3 integration
+    └── bot-platform-service          :8109  # Telegram, Slack, WhatsApp bots
 ```
 
 ### Архитектурная диаграмма
@@ -148,18 +160,18 @@ FREE LMS — это современная корпоративная систе
         ┌───────────────┬───────────────┼───────────────┬─────────────────┐
         │               │               │               │                 │
    ┌────▼────┐    ┌─────▼────┐   ┌──────▼─────┐  ┌──────▼─────┐   ┌───────▼──────┐
-   │  Auth   │    │  Course  │   │ Enrollment │  │Gamification│   │   + 15 more  │
+   │  Auth   │    │  Course  │   │ Enrollment │  │  Search    │   │   + 25 more  │
    │ Service │    │ Service  │   │  Service   │  │  Service   │   │   services   │
    └────┬────┘    └─────┬────┘   └──────┬─────┘  └──────┬─────┘   └───────┬──────┘
         │               │               │               │                 │
         └───────────────┴───────────────┴───────────────┴─────────────────┘
                                         │
-              ┌─────────────────────────┼─────────────────────────┐
-              │                         │                         │
-        ┌─────▼─────┐             ┌─────▼─────┐             ┌─────▼─────┐
-        │PostgreSQL │             │   Redis   │             │   Kafka   │
-        │  Cluster  │             │  Cluster  │             │  Cluster  │
-        └───────────┘             └───────────┘             └───────────┘
+       ┌────────────────────────────────┼────────────────────────────────┐
+       │                    │           │           │                    │
+ ┌─────▼─────┐       ┌──────▼────┐ ┌────▼────┐ ┌────▼─────┐       ┌──────▼──────┐
+ │PostgreSQL │       │   Redis   │ │  Kafka  │ │  MinIO   │       │Elasticsearch│
+ │  Cluster  │       │  Cluster  │ │ Cluster │ │ Storage  │       │   Cluster   │
+ └───────────┘       └───────────┘ └─────────┘ └──────────┘       └─────────────┘
 ```
 
 ---
@@ -335,9 +347,21 @@ mvn gatling:test
 
 ## 📈 Roadmap
 
+### Completed
+- [x] Search Service (Elasticsearch integration)
+- [x] Media Processing (Video transcoding, HLS streaming)
+- [x] Event/Webinar Service (Zoom, Teams, Meet integration)
+- [x] Authoring Tools (H5P, SCORM support)
+- [x] Proctoring Service (AI-powered exam monitoring)
+- [x] Assignment Review (Auto-grading, plagiarism detection)
+- [x] Resource Booking (Rooms, equipment, trainers)
+- [x] Audit Logging (SOC2/GDPR compliance)
+- [x] LTI Service (LTI 1.3 Advantage)
+- [x] Bot Platform (Telegram, Slack, WhatsApp)
+
+### Planned
 - [ ] Mobile apps (iOS, Android)
 - [ ] AI-powered recommendations
-- [ ] SCORM 2004 support
 - [ ] xAPI (Tin Can) integration
 - [ ] Multi-tenancy improvements
 - [ ] GraphQL API

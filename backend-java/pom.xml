@@ -44,6 +44,17 @@
         <module>services/integration-service</module>
         <module>services/marketplace-service</module>
         <module>services/onboarding-service</module>
+        <!-- New Extension Services (Phase 2) -->
+        <module>services/search-service</module>
+        <module>services/media-processing-service</module>
+        <module>services/event-service</module>
+        <module>services/authoring-service</module>
+        <module>services/proctoring-service</module>
+        <module>services/assignment-review-service</module>
+        <module>services/resource-booking-service</module>
+        <module>services/audit-logging-service</module>
+        <module>services/lti-service</module>
+        <module>services/bot-platform-service</module>
         <!-- Marketplace Modules -->
         <module>modules/cbu-currency-rates</module>
     </modules>

@@ -1,0 +1,66 @@
+server:
+  port: 8107
+
+spring:
+  application:
+    name: audit-logging-service
+  config:
+    import: optional:configserver:http://${CONFIG_USER:config}:${CONFIG_PASSWORD:config123}@${CONFIG_HOST:localhost}:${CONFIG_PORT:8888}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms_audit}
+    username: ${DB_USER:lms_user}
+    password: ${DB_PASSWORD:lms_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      group-id: audit-collector
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.freelms.*
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: lms-audit-archives
+
+audit:
+  retention:
+    hot-days: 90
+    cold-years: 7
+  archival:
+    enabled: true
+    schedule: "0 0 2 * * *"  # 2 AM daily
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_USER:eureka}:${EUREKA_PASSWORD:eureka123}@${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.freelms.audit: DEBUG

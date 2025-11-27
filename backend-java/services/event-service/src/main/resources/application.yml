@@ -1,0 +1,80 @@
+server:
+  port: 8102
+
+spring:
+  application:
+    name: event-service
+  config:
+    import: optional:configserver:http://${CONFIG_USER:config}:${CONFIG_PASSWORD:config123}@${CONFIG_HOST:localhost}:${CONFIG_PORT:8888}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms_events}
+    username: ${DB_USER:lms_user}
+    password: ${DB_PASSWORD:lms_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: event-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.freelms.*
+
+# Video conference integrations
+video-conference:
+  zoom:
+    api-key: ${ZOOM_API_KEY:}
+    api-secret: ${ZOOM_API_SECRET:}
+    account-id: ${ZOOM_ACCOUNT_ID:}
+  teams:
+    client-id: ${TEAMS_CLIENT_ID:}
+    client-secret: ${TEAMS_CLIENT_SECRET:}
+    tenant-id: ${TEAMS_TENANT_ID:}
+  google-meet:
+    credentials-path: ${GOOGLE_CREDENTIALS_PATH:}
+  bigbluebutton:
+    url: ${BBB_URL:}
+    secret: ${BBB_SECRET:}
+  jitsi:
+    url: ${JITSI_URL:https://meet.jit.si}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_USER:eureka}:${EUREKA_PASSWORD:eureka123}@${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.freelms.event: DEBUG
