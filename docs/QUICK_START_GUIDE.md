@@ -50,7 +50,7 @@
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    API GATEWAY                               │
-│         (Главный вход в систему, порт 8080)                 │
+│         (Главный вход в систему, порт 8000)                 │
 └─────────────────────────┬───────────────────────────────────┘
                           │
         ┌─────────────────┼─────────────────┐
@@ -300,7 +300,7 @@ NAME                    STATUS          PORTS
 freelms-postgres        Up (healthy)    5432
 freelms-redis           Up (healthy)    6379
 freelms-kafka           Up              9092
-freelms-gateway         Up              0.0.0.0:8080->8080
+freelms-gateway         Up              0.0.0.0:8000->8000
 freelms-auth            Up              8081
 freelms-courses         Up              8082
 ...
@@ -325,7 +325,7 @@ docker compose logs gateway-service | tail -20
 
 Перейдите по адресу:
 ```
-http://localhost:8080/actuator/health
+http://localhost:8000/actuator/health
 ```
 
 Вы должны увидеть:
@@ -349,7 +349,7 @@ http://localhost:8761
 
 Откройте:
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8000/swagger-ui.html
 ```
 
 Здесь можно посмотреть и протестировать все API endpoints.
@@ -363,7 +363,7 @@ http://localhost:8080/swagger-ui.html
 Используя Swagger UI или curl:
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -377,7 +377,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 ### Шаг 7.2: Войдите в систему
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -505,16 +505,16 @@ mvn spring-boot:run
 
 ### ❌ Порт уже занят
 
-**Ошибка:** `Port 8080 is already in use`
+**Ошибка:** `Port 8000 is already in use`
 
 **Решение:**
 ```bash
 # Найти процесс, занимающий порт
 # Windows:
-netstat -ano | findstr :8080
+netstat -ano | findstr :8000
 
 # macOS/Linux:
-lsof -i :8080
+lsof -i :8000
 
 # Остановить процесс (замените PID на номер из предыдущей команды)
 # Windows:
@@ -620,7 +620,7 @@ docker compose logs postgres
 |----------|----------|
 | [README.md](../README.md) | Общее описание проекта |
 | [DEPLOYMENT.md](../backend-java/DEPLOYMENT.md) | Production развертывание |
-| [API Docs](http://localhost:8080/swagger-ui.html) | Документация API |
+| [API Docs](http://localhost:8000/swagger-ui.html) | Документация API |
 
 ### 🔧 Настройте под себя
 

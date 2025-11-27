@@ -6,7 +6,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.1-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Microservices](https://img.shields.io/badge/Microservices-20-purple)
+![Microservices](https://img.shields.io/badge/Microservices-22-purple)
 
 **Enterprise-grade Learning Management System**
 
@@ -24,7 +24,7 @@ Smartup LMS — это современная корпоративная сис�
 
 | Показатель | Значение |
 |------------|----------|
-| Микросервисы | 20 |
+| Микросервисы | 22 |
 | Целевые пользователи | 100,000+ |
 | Concurrent users | 1,000+ |
 | Target RPS | 1,000+ |
@@ -73,6 +73,18 @@ Smartup LMS — это современная корпоративная сис�
 - **SSO** — LDAP, Active Directory, OAuth2
 - **Видеоконференции** — Zoom, Teams, Jitsi
 
+### 🛒 Маркетплейс
+- **Модули расширения** — установка дополнительных функций
+- **Готовые курсы** — покупка и подписка
+- **Plugin API** — интеграция сторонних модулей
+- **CBU курсы валют** — пример модуля интеграции
+
+### 🎯 Онбординг
+- **Мини-туры** — пошаговые руководства
+- **Ролевые сценарии** — для студентов, преподавателей, админов
+- **Чек-листы** — задачи первых шагов
+- **Контекстные подсказки** — помощь в интерфейсе
+
 ---
 
 ## 🏗️ Архитектура
@@ -87,15 +99,15 @@ Smartup LMS — это современная корпоративная сис�
 | **Infrastructure** | Docker, Kubernetes, Nginx |
 | **Monitoring** | Prometheus, Grafana, ELK |
 
-### Микросервисы (20)
+### Микросервисы (22)
 
 ```
-├── Infrastructure
+├── Infrastructure (3)
 │   ├── service-registry (Eureka)     :8761
 │   ├── config-server                 :8888
-│   └── gateway-service               :8080
+│   └── gateway-service               :8000
 │
-├── Core Services
+├── Core Services (7)
 │   ├── auth-service                  :8081
 │   ├── course-service                :8082
 │   ├── enrollment-service            :8083
@@ -104,17 +116,21 @@ Smartup LMS — это современная корпоративная сис�
 │   ├── analytics-service             :8086
 │   └── organization-service          :8087
 │
-└── Feature Services
-    ├── learning-path-service         :8088
-    ├── skills-service                :8089
-    ├── gamification-service          :8090
-    ├── idp-service                   :8091
-    ├── feedback-service              :8092
-    ├── mentoring-service             :8093
-    ├── social-learning-service       :8094
-    ├── compliance-service            :8095
-    ├── reporting-service             :8096
-    └── integration-service           :8097
+├── Feature Services (10)
+│   ├── learning-path-service         :8088
+│   ├── skills-service                :8089
+│   ├── gamification-service          :8090
+│   ├── idp-service                   :8091
+│   ├── feedback-service              :8092
+│   ├── mentoring-service             :8093
+│   ├── social-learning-service       :8094
+│   ├── compliance-service            :8095
+│   ├── reporting-service             :8096
+│   └── integration-service           :8097
+│
+└── Platform Services (2)
+    ├── marketplace-service           :8098
+    └── onboarding-service            :8099
 ```
 
 ### Архитектурная диаграмма
@@ -226,8 +242,8 @@ smartup-lms/
 ### API Документация
 
 После запуска доступна по адресам:
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- Swagger UI: `http://localhost:8000/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8000/v3/api-docs`
 
 ### Нагрузочное тестирование
 
@@ -235,7 +251,7 @@ smartup-lms/
 cd backend-java/load-testing/gatling
 
 # Запуск тестов (1000 пользователей)
-mvn gatling:test -DbaseUrl=http://localhost:8080 -Dusers=1000
+mvn gatling:test -DbaseUrl=http://localhost:8000 -Dusers=1000
 
 # Smoke test
 mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest

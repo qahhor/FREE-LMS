@@ -99,10 +99,10 @@ mvn test
 smartup-lms/
 ├── backend-java/                 # Java Spring Boot Backend
 │   ├── common/                   # Общая библиотека
-│   ├── services/                 # 20 микросервисов
+│   ├── services/                 # 22 микросервиса
 │   │   ├── service-registry/     # Eureka (8761)
 │   │   ├── config-server/        # Config (8888)
-│   │   ├── gateway-service/      # Gateway (8080)
+│   │   ├── gateway-service/      # Gateway (8000)
 │   │   ├── auth-service/         # Auth (8081)
 │   │   ├── course-service/       # Courses (8082)
 │   │   ├── enrollment-service/   # Enrollments (8083)
@@ -119,7 +119,10 @@ smartup-lms/
 │   │   ├── social-learning-service/ # Social (8094)
 │   │   ├── compliance-service/   # Compliance (8095)
 │   │   ├── reporting-service/    # Reporting (8096)
-│   │   └── integration-service/  # Integrations (8097)
+│   │   ├── integration-service/  # Integrations (8097)
+│   │   ├── marketplace-service/  # Marketplace (8098)
+│   │   └── onboarding-service/   # Onboarding (8099)
+│   ├── modules/                  # Marketplace модули
 │   ├── database/                 # SQL миграции
 │   ├── k8s/                      # Kubernetes манифесты
 │   └── load-testing/             # Gatling тесты

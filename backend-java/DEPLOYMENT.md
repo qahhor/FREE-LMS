@@ -149,7 +149,7 @@ docker-compose -f docker-compose.prod.yml logs -f gateway-service
 
 ```bash
 # Проверка всех сервисов
-for port in 8761 8888 8080 8081 8082 8083; do
+for port in 8761 8888 8000 8081 8082 8083; do
   echo "Checking port $port..."
   curl -s http://localhost:$port/actuator/health | jq .status
 done

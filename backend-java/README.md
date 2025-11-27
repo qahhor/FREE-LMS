@@ -6,7 +6,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.1-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![Microservices](https://img.shields.io/badge/Microservices-20-purple)
+![Microservices](https://img.shields.io/badge/Microservices-22-purple)
 
 **Enterprise Learning Management System — Microservices Architecture**
 
@@ -41,7 +41,7 @@
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           API GATEWAY (Port 8080)                                │
+│                           API GATEWAY (Port 8000)                                │
 │                    Spring Cloud Gateway + Rate Limiting + JWT                    │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                        │
@@ -202,7 +202,7 @@
 |--------|------|----------|
 | **service-registry** | 8761 | Eureka Service Discovery |
 | **config-server** | 8888 | Centralized Configuration |
-| **gateway-service** | 8080 | API Gateway + Rate Limiting |
+| **gateway-service** | 8000 | API Gateway + Rate Limiting |
 
 ### Core Services (7)
 
@@ -230,6 +230,13 @@
 | **compliance-service** | 8095 | Mandatory Training, Certifications, Audit |
 | **reporting-service** | 8096 | Dashboards, BI Export, ROI Analytics |
 | **integration-service** | 8097 | HR Systems, Calendar, Video, SSO |
+
+### Platform Services (2)
+
+| Сервис | Порт | Описание |
+|--------|------|----------|
+| **marketplace-service** | 8098 | Module Store, Course Marketplace, Plugins |
+| **onboarding-service** | 8099 | Guided Tours, Checklists, Contextual Help |
 
 ---
 
@@ -291,14 +298,14 @@ cd services/course-service && mvn spring-boot:run
 
 ```bash
 # Health check
-curl http://localhost:8080/actuator/health
+curl http://localhost:8000/actuator/health
 
 # Eureka Dashboard
 open http://localhost:8761
 # Login: eureka / eureka123
 
 # Swagger UI
-open http://localhost:8080/swagger-ui.html
+open http://localhost:8000/swagger-ui.html
 ```
 
 ---
@@ -324,7 +331,7 @@ backend-java/
 │       ├── validation/                  # Custom validators
 │       └── util/                        # Utilities
 │
-├── services/                            # 20 Microservices
+├── services/                            # 22 Microservices
 │   ├── service-registry/                # Eureka Server
 │   ├── config-server/                   # Config Server
 │   ├── gateway-service/                 # API Gateway
@@ -344,7 +351,12 @@ backend-java/
 │   ├── social-learning-service/         # Social Learning
 │   ├── compliance-service/              # Compliance
 │   ├── reporting-service/               # Reporting
-│   └── integration-service/             # Integrations
+│   ├── integration-service/             # Integrations
+│   ├── marketplace-service/             # Marketplace
+│   └── onboarding-service/              # Onboarding
+│
+├── modules/                             # Marketplace Modules
+│   └── cbu-currency-rates/              # CBU Currency Rates Module
 │
 ├── database/
 │   └── migrations/                      # SQL migrations
@@ -373,7 +385,7 @@ backend-java/
 
 | Сервис | Swagger UI |
 |--------|------------|
-| **Gateway** | http://localhost:8080/swagger-ui.html |
+| **Gateway** | http://localhost:8000/swagger-ui.html |
 
 ### Direct Service Endpoints
 
@@ -386,6 +398,8 @@ backend-java/
 | Notification | http://localhost:8085/swagger-ui.html |
 | Analytics | http://localhost:8086/swagger-ui.html |
 | Organization | http://localhost:8087/swagger-ui.html |
+| Marketplace | http://localhost:8098/swagger-ui.html |
+| Onboarding | http://localhost:8099/swagger-ui.html |
 
 ### Основные API Endpoints
 
@@ -422,6 +436,20 @@ GET    /api/v1/learning-paths/my/progress
 GET    /api/v1/skills/matrix
 GET    /api/v1/skills/gaps
 POST   /api/v1/skills/{id}/endorse
+
+# Marketplace
+GET    /api/v1/marketplace/items
+GET    /api/v1/marketplace/modules
+GET    /api/v1/marketplace/courses
+POST   /api/v1/organizations/{id}/modules/{slug}/install
+GET    /api/v1/organizations/{id}/modules
+
+# Onboarding
+GET    /api/v1/onboarding/flows
+POST   /api/v1/onboarding/flows/{slug}/start
+GET    /api/v1/onboarding/progress
+POST   /api/v1/onboarding/progress/{id}/complete-step
+GET    /api/v1/onboarding/checklists
 ```
 
 ---
@@ -501,6 +529,8 @@ mvn spring-boot:run -Dspring-boot.run.profiles=docker
 | freelms_compliance | compliance-service |
 | freelms_reporting | reporting-service |
 | freelms_integrations | integration-service |
+| freelms_marketplace | marketplace-service |
+| freelms_onboarding | onboarding-service |
 
 ### Индексы
 
@@ -543,7 +573,7 @@ mvn verify -Pintegration
 cd load-testing/gatling
 
 # Standard test (1000 users)
-mvn gatling:test -DbaseUrl=http://localhost:8080 -Dusers=1000
+mvn gatling:test -DbaseUrl=http://localhost:8000 -Dusers=1000
 
 # Smoke test
 mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest
@@ -603,9 +633,9 @@ kubectl get hpa -n freelms
 ### Health Endpoints
 
 ```bash
-curl http://localhost:8080/actuator/health
-curl http://localhost:8080/actuator/metrics
-curl http://localhost:8080/actuator/prometheus
+curl http://localhost:8000/actuator/health
+curl http://localhost:8000/actuator/metrics
+curl http://localhost:8000/actuator/prometheus
 ```
 
 ### Eureka Dashboard

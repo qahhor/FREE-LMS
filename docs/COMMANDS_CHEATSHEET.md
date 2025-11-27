@@ -177,17 +177,17 @@ FLUSHALL
 
 ```bash
 # Регистрация
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"user@test.com","password":"Test123!","firstName":"Test","lastName":"User"}'
 
 # Вход
-curl -X POST http://localhost:8080/api/v1/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@test.com","password":"Test123!"}'
 
 # Использование токена
-curl -X GET http://localhost:8080/api/v1/users/me \
+curl -X GET http://localhost:8000/api/v1/users/me \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
@@ -195,7 +195,7 @@ curl -X GET http://localhost:8080/api/v1/users/me \
 
 ```bash
 # Gateway health
-curl http://localhost:8080/actuator/health
+curl http://localhost:8000/actuator/health
 
 # Проверить все сервисы
 for port in 8081 8082 8083 8084 8085; do
@@ -222,10 +222,10 @@ docker compose logs -f auth-service | grep -i "login\|error"
 
 ```bash
 # Prometheus метрики
-curl http://localhost:8080/actuator/prometheus
+curl http://localhost:8000/actuator/prometheus
 
 # JVM память
-curl http://localhost:8080/actuator/metrics/jvm.memory.used
+curl http://localhost:8000/actuator/metrics/jvm.memory.used
 ```
 
 ---
@@ -237,7 +237,7 @@ curl http://localhost:8080/actuator/metrics/jvm.memory.used
 cd backend-java/load-testing/gatling
 
 # Запустить тесты
-mvn gatling:test -DbaseUrl=http://localhost:8080 -Dusers=100
+mvn gatling:test -DbaseUrl=http://localhost:8000 -Dusers=100
 
 # Smoke test
 mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest
@@ -289,12 +289,12 @@ docker compose up -d auth-service
 
 ```bash
 # Быстрая проверка
-curl -s http://localhost:8080/actuator/health | jq .
+curl -s http://localhost:8000/actuator/health | jq .
 
 # Детальная проверка
 docker compose ps
 curl http://localhost:8761  # Eureka
-curl http://localhost:8080/actuator/health  # Gateway
+curl http://localhost:8000/actuator/health  # Gateway
 ```
 
 ### Освободить ресурсы
@@ -330,10 +330,10 @@ docker compose up -d --build
 
 ```bash
 # Linux/macOS
-lsof -i :8080
+lsof -i :8000
 
 # Windows
-netstat -ano | findstr :8080
+netstat -ano | findstr :8000
 ```
 
 ### Проверить место на диске
@@ -352,9 +352,9 @@ docker system df -v
 
 | Сервис | URL | Логин/Пароль |
 |--------|-----|--------------|
-| API Gateway | http://localhost:8080 | - |
+| API Gateway | http://localhost:8000 | - |
 | Eureka Dashboard | http://localhost:8761 | eureka / eureka123 |
-| Swagger UI | http://localhost:8080/swagger-ui.html | - |
+| Swagger UI | http://localhost:8000/swagger-ui.html | - |
 | MinIO Console | http://localhost:9001 | minioadmin / minioadmin |
 
 ---

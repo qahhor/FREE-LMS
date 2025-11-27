@@ -262,7 +262,7 @@ docker compose restart auth-service
 sleep 60
 
 # Проверить
-curl http://localhost:8080/api/v1/auth/health
+curl http://localhost:8000/api/v1/auth/health
 ```
 
 ---
@@ -368,14 +368,14 @@ mvn spring-boot:run
 
 **Симптомы:**
 ```
-Bind for 0.0.0.0:8080 failed: port is already allocated
+Bind for 0.0.0.0:8000 failed: port is already allocated
 ```
 
 **Диагностика:**
 
 **Windows:**
 ```powershell
-netstat -ano | findstr :8080
+netstat -ano | findstr :8000
 # Найдите PID и завершите процесс
 taskkill /PID <PID> /F
 ```
@@ -383,10 +383,10 @@ taskkill /PID <PID> /F
 **macOS/Linux:**
 ```bash
 # Найти процесс
-lsof -i :8080
+lsof -i :8000
 
 # Или
-sudo ss -tulpn | grep 8080
+sudo ss -tulpn | grep 8000
 
 # Завершить процесс
 kill -9 <PID>
@@ -443,13 +443,13 @@ docker compose up -d
 
 2. **Проверьте порт:**
    ```bash
-   curl http://localhost:8080/actuator/health
+   curl http://localhost:8000/actuator/health
    ```
 
 3. **Проверьте firewall (Linux):**
    ```bash
    sudo ufw status
-   sudo ufw allow 8080
+   sudo ufw allow 8000
    ```
 
 4. **Для WSL2 (Windows):**
@@ -543,12 +543,12 @@ cannot find symbol: method getEmail()
 **Решение:**
 ```bash
 # Получите новый токен
-curl -X POST http://localhost:8080/api/v1/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@test.com","password":"Test123!"}'
 
 # Используйте токен из ответа
-curl http://localhost:8080/api/v1/users/me \
+curl http://localhost:8000/api/v1/users/me \
   -H "Authorization: Bearer <YOUR_TOKEN>"
 ```
 
