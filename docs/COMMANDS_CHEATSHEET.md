@@ -105,6 +105,19 @@ mvn test -pl services/auth-service
 
 # Запустить один тест
 mvn test -Dtest=UserServiceTest
+
+# Запустить E2E тесты (интеграционные)
+cd integration-tests
+mvn test
+
+# Запустить тесты для новых сервисов
+mvn test -P extension-services
+
+# Запустить тесты медиа-сервисов
+mvn test -P media
+
+# Запустить тесты событий/вебинаров
+mvn test -P events
 ```
 
 ### Зависимости
@@ -356,6 +369,11 @@ docker system df -v
 | Eureka Dashboard | http://localhost:8761 | eureka / eureka123 |
 | Swagger UI | http://localhost:8000/swagger-ui.html | - |
 | MinIO Console | http://localhost:9001 | minioadmin / minioadmin |
+| Search Service | http://localhost:8100/swagger-ui.html | - |
+| Media Processing | http://localhost:8101/swagger-ui.html | - |
+| Event Service | http://localhost:8102/swagger-ui.html | - |
+| Authoring Service | http://localhost:8103/swagger-ui.html | - |
+| Proctoring Service | http://localhost:8104/swagger-ui.html | - |
 
 ---
 
