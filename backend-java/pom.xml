@@ -9,8 +9,8 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Smartup LMS - Parent</name>
-    <description>Enterprise Learning Management System - Microservices Architecture</description>
+    <name>FREE LMS - Parent</name>
+    <description>Enterprise Learning Management System - Modular Monolith Architecture</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -20,43 +20,11 @@
     </parent>
 
     <modules>
-        <module>common</module>
-        <module>services/service-registry</module>
-        <module>services/config-server</module>
-        <module>services/gateway-service</module>
-        <module>services/auth-service</module>
-        <module>services/course-service</module>
-        <module>services/enrollment-service</module>
-        <module>services/payment-service</module>
-        <module>services/notification-service</module>
-        <module>services/analytics-service</module>
-        <module>services/organization-service</module>
-        <!-- New Feature Services -->
-        <module>services/learning-path-service</module>
-        <module>services/skills-service</module>
-        <module>services/gamification-service</module>
-        <module>services/idp-service</module>
-        <module>services/feedback-service</module>
-        <module>services/mentoring-service</module>
-        <module>services/social-learning-service</module>
-        <module>services/compliance-service</module>
-        <module>services/reporting-service</module>
-        <module>services/integration-service</module>
-        <module>services/marketplace-service</module>
-        <module>services/onboarding-service</module>
-        <!-- New Extension Services (Phase 2) -->
-        <module>services/search-service</module>
-        <module>services/media-processing-service</module>
-        <module>services/event-service</module>
-        <module>services/authoring-service</module>
-        <module>services/proctoring-service</module>
-        <module>services/assignment-review-service</module>
-        <module>services/resource-booking-service</module>
-        <module>services/audit-logging-service</module>
-        <module>services/lti-service</module>
-        <module>services/bot-platform-service</module>
-        <!-- Marketplace Modules -->
-        <module>modules/cbu-currency-rates</module>
+        <!-- Main Application -->
+        <module>monolith</module>
+        <!-- Messenger Bots -->
+        <module>bots/telegram</module>
+        <module>bots/whatsapp</module>
     </modules>
 
     <properties>
@@ -64,9 +32,6 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!-- Spring Cloud -->
-        <spring-cloud.version>2023.0.1</spring-cloud.version>
 
         <!-- Dependencies versions -->
         <jjwt.version>0.12.6</jjwt.version>
@@ -80,22 +45,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Cloud BOM -->
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- Common Module -->
-            <dependency>
-                <groupId>com.freelms</groupId>
-                <artifactId>free-lms-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <!-- JWT -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
@@ -124,11 +73,6 @@
             <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>${springdoc.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
                 <version>${springdoc.version}</version>
             </dependency>
 

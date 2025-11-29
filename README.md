@@ -213,17 +213,17 @@ free-lms/
 ├── backend-java/
 │   ├── monolith/               # Основное приложение
 │   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/       # Java код
-│   │   │   │   └── resources/  # Конфигурации
+│   │   │   ├── main/java/      # Java код
 │   │   │   └── test/           # Тесты
 │   │   ├── Dockerfile
 │   │   └── pom.xml
-│   ├── services/               # (legacy) Микросервисы
-│   └── README.md
+│   ├── bots/                   # Messenger боты
+│   │   ├── telegram/           # Telegram бот (Java)
+│   │   └── whatsapp/           # WhatsApp бот (Twilio)
+│   ├── monitoring/             # Prometheus, Grafana, Alertmanager
+│   ├── backup/                 # Скрипты резервного копирования
+│   └── pom.xml
 ├── docs/
-│   ├── ARCHITECTURE.md         # Архитектурная документация
-│   ├── MIGRATION_GUIDE.md      # Руководство по миграции
 │   ├── QUICK_START_GUIDE.md    # Пошаговое руководство
 │   ├── TROUBLESHOOTING.md      # Решение проблем
 │   └── runbooks/               # Операционные руководства
