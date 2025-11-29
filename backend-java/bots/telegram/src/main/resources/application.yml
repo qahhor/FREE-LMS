@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: freelms-telegram-bot
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:your-bot-token}
+    username: ${TELEGRAM_BOT_USERNAME:FreeLmsBot}
+    api-url: ${LMS_API_URL:http://localhost:8080/api/v1}
+
+server:
+  port: 8081
+
+logging:
+  level:
+    root: INFO
+    com.freelms.bot.telegram: DEBUG
+    org.telegram: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
