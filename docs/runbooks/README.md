@@ -1,34 +1,98 @@
 # FREE LMS - Operations Runbooks
 
-This directory contains operational runbooks for managing the FREE LMS platform.
+Операционные руководства для управления платформой FREE LMS.
 
-## Quick Links
+## Структура
 
-| Runbook | Description | Severity |
-|---------|-------------|----------|
-| [Service Restart](service-restart.md) | Restarting individual services | Low |
-| [Database Operations](database-operations.md) | DB maintenance and troubleshooting | Medium |
-| [Incident Response](incident-response.md) | Handling production incidents | High |
-| [Scaling Operations](scaling-operations.md) | Manual and auto-scaling | Medium |
-| [Deployment](deployment.md) | Deploying new versions | Medium |
+| Runbook | Описание | Severity |
+|---------|----------|----------|
+| [Application Operations](application-operations.md) | Управление приложением | Medium |
+| [Database Operations](database-operations.md) | Операции с БД | Medium |
+| [Incident Response](incident-response.md) | Реагирование на инциденты | High |
+
+## Архитектура
+
+FREE LMS использует **модульную монолитную архитектуру**:
+
+```
+┌─────────────────────────────────────────┐
+│          FREE LMS Application           │
+│              (Port 8080)                │
+├─────────┬─────────┬─────────┬─────────┤
+│  Auth   │ Course  │Enrollment│ Payment │
+│ Module  │ Module  │  Module  │ Module  │
+└─────────┴────┬────┴─────────┴─────────┘
+               │
+    ┌──────────┼──────────┐
+    │          │          │
+┌───▼───┐  ┌───▼───┐  ┌───▼───┐
+│Postgres│  │ Redis │  │ Kafka │
+│  :5432 │  │ :6379 │  │ :9092 │
+└────────┘  └───────┘  └───────┘
+```
+
+## Компоненты
+
+| Компонент | Порт | Описание |
+|-----------|------|----------|
+| Application | 8080 | FREE LMS Monolith |
+| PostgreSQL | 5432 | Primary Database |
+| Redis | 6379 | Cache |
+| Kafka | 9092 | Event Streaming |
+| Elasticsearch | 9200 | Search (optional) |
+| MongoDB | 27017 | Documents (optional) |
+| MinIO | 9000/9001 | Object Storage |
+
+## Быстрые команды
+
+### Health Check
+
+```bash
+# Проверка приложения
+curl http://localhost:8080/actuator/health
+
+# Liveness probe
+curl http://localhost:8080/actuator/health/liveness
+
+# Readiness probe
+curl http://localhost:8080/actuator/health/readiness
+```
+
+### Логи
+
+```bash
+# Логи приложения
+docker-compose -f docker-compose.monolith.yml logs -f app
+
+# Логи с фильтрацией ошибок
+docker-compose -f docker-compose.monolith.yml logs -f app | grep -i error
+```
+
+### Перезапуск
+
+```bash
+# Перезапуск приложения
+docker-compose -f docker-compose.monolith.yml restart app
+
+# Полный перезапуск
+docker-compose -f docker-compose.monolith.yml down
+docker-compose -f docker-compose.monolith.yml up -d
+```
 
 ## On-Call Checklist
 
-Before starting on-call shift:
+Перед началом дежурства:
 
-- [ ] Access to Grafana dashboards
-- [ ] Access to Kibana/logs
-- [ ] Access to Kubernetes cluster
-- [ ] Access to PagerDuty
-- [ ] Slack channels joined (#ops-alerts, #oncall)
-- [ ] VPN connected
-- [ ] Runbooks bookmarked
+- [ ] Доступ к Docker/Kubernetes
+- [ ] Доступ к логам
+- [ ] Доступ к базе данных
+- [ ] Runbooks изучены
+- [ ] Контакты эскалации известны
 
-## Contact Information
+## Контакты
 
-| Role | Contact |
+| Роль | Контакт |
 |------|---------|
 | Primary On-Call | PagerDuty rotation |
-| Secondary On-Call | PagerDuty rotation |
 | Infrastructure Lead | infra@smartup24.com |
 | Database Admin | dba@smartup24.com |

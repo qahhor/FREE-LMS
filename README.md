@@ -4,43 +4,44 @@
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green)
-![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.1-blue)
+![Architecture](https://img.shields.io/badge/Architecture-Modular%20Monolith-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Microservices](https://img.shields.io/badge/Microservices-32-purple)
 
 **Enterprise-grade Learning Management System**
 
-[Демо](docs/landing/index.html) • [Документация](#документация) • [Быстрый старт](#быстрый-старт) • [API](#api-документация)
+[Демо](docs/landing/index.html) | [Документация](#документация) | [Быстрый старт](#быстрый-старт) | [API](#api-документация)
 
 </div>
 
 ---
 
-## 🎯 О проекте
+## О проекте
 
-FREE LMS — это современная корпоративная система управления обучением, построенная на микросервисной архитектуре. Платформа разработана для масштабирования до **100 000+ пользователей** и **200+ организаций**.
+FREE LMS — это современная корпоративная система управления обучением, построенная на модульной монолитной архитектуре. Платформа разработана для масштабирования до **100 000+ пользователей** и **200+ организаций**.
 
 ### Ключевые метрики
 
 | Показатель | Значение |
 |------------|----------|
-| Микросервисы | 32 |
+| Архитектура | Модульный монолит |
 | Целевые пользователи | 100,000+ |
 | Concurrent users | 1,000+ |
 | Target RPS | 1,000+ |
 | Uptime SLA | 99.9% |
+| Время запуска | ~30 секунд |
+| Потребление памяти | ~1-2 GB |
 
 ---
 
-## ✨ Возможности
+## Возможности
 
-### 🎓 Обучение
+### Обучение
 - **Курсы и уроки** — видео, тексты, документы, SCORM
 - **Квизы и тесты** — множественный выбор, свободный ответ
 - **Траектории обучения** — связанные курсы с пререквизитами
 - **Карьерные треки** — Junior → Senior с требованиями
 
-### 🎮 Геймификация
+### Геймификация
 - **Баллы и XP** — за прохождение курсов и активность
 - **Достижения и бейджи** — система наград
 - **Лидерборды** — недельные, месячные, годовые
@@ -48,243 +49,242 @@ FREE LMS — это современная корпоративная систе
 - **Виртуальная валюта** — обмен на награды
 - **Стрики** — непрерывные дни обучения
 
-### 📊 Аналитика
+### Аналитика
 - **Дашборды** — персональные и для менеджеров
 - **ROI обучения** — оценка эффективности инвестиций
 - **Heatmap активности** — визуализация вовлечённости
 - **Воронки курсов** — анализ отсева
 - **BI-экспорт** — Excel, PDF, CSV, JSON
 
-### 👥 Социальное обучение
+### Социальное обучение
 - **Q&A форум** — вопросы и ответы
 - **Учебные группы** — совместное обучение
 - **Менторинг** — подбор менторов, сессии
 - **Peer-контент** — UGC от сотрудников
 
-### ✅ Compliance
+### Compliance
 - **Обязательные курсы** — автоназначение
 - **Сертификаты** — с датой истечения
 - **Аудит-лог** — все действия пользователей
 - **Электронные подписи** — для документов
 
-### 🔗 Интеграции
+### Интеграции
 - **HR-системы** — синхронизация сотрудников
 - **Календари** — Google, Outlook, CalDAV
 - **SSO** — LDAP, Active Directory, OAuth2
 - **Видеоконференции** — Zoom, Teams, Jitsi
 
-### 🛒 Маркетплейс
-- **Модули расширения** — установка дополнительных функций
-- **Готовые курсы** — покупка и подписка
-- **Plugin API** — интеграция сторонних модулей
-- **CBU курсы валют** — пример модуля интеграции
-
-### 🎯 Онбординг
-- **Мини-туры** — пошаговые руководства
-- **Ролевые сценарии** — для студентов, преподавателей, админов
-- **Чек-листы** — задачи первых шагов
-- **Контекстные подсказки** — помощь в интерфейсе
-
 ---
 
-## 🏗️ Архитектура
+## Архитектура
+
+### Модульный монолит
+
+FREE LMS использует модульную монолитную архитектуру — золотую середину между монолитом и микросервисами:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         FREE LMS MONOLITH                                │
+│                                                                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │    Auth     │  │   Course    │  │ Enrollment  │  │   Payment   │    │
+│  │   Module    │  │   Module    │  │   Module    │  │   Module    │    │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘    │
+│         │                │                │                │            │
+│         └────────────────┴────────────────┴────────────────┘            │
+│                                   │                                      │
+│                          ┌────────▼────────┐                            │
+│                          │  Common Module  │                            │
+│                          │  (Security, DTO,│                            │
+│                          │   Exceptions)   │                            │
+│                          └─────────────────┘                            │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+   ┌────▼────┐                 ┌────▼────┐                 ┌────▼────┐
+   │PostgreSQL│                │  Redis  │                 │  Kafka  │
+   │    16   │                 │    7    │                 │ (async) │
+   └─────────┘                 └─────────┘                 └─────────┘
+```
+
+### Преимущества модульного монолита
+
+| Аспект | Микросервисы | Модульный монолит |
+|--------|--------------|-------------------|
+| Время запуска | 3-5 минут | ~30 секунд |
+| Потребление памяти | 8-16 GB | 1-2 GB |
+| Latency вызовов | 5-50ms (сеть) | <1ms (память) |
+| Количество контейнеров | 35+ | 7 |
+| Сложность деплоя | Высокая | Низкая |
+| Отладка | Сложная | Простая |
 
 ### Технологический стек
 
 | Уровень | Технологии |
 |---------|-----------|
-| **Backend** | Java 21, Spring Boot 3.2.5, Spring Cloud 2023.0.1 |
-| **Базы данных** | PostgreSQL 16, Redis 7 |
+| **Backend** | Java 21, Spring Boot 3.2.5 |
+| **Базы данных** | PostgreSQL 16, Redis 7, MongoDB 7 |
 | **Messaging** | Apache Kafka |
-| **Infrastructure** | Docker, Kubernetes, Nginx |
+| **Search** | Elasticsearch 8.11 |
+| **Storage** | MinIO (S3-compatible) |
+| **Infrastructure** | Docker, Kubernetes |
 | **Monitoring** | Prometheus, Grafana, ELK |
 
-### Микросервисы (32)
+### Модули приложения
 
 ```
-├── Infrastructure (3)
-│   ├── service-registry (Eureka)     :8761
-│   ├── config-server                 :8888
-│   └── gateway-service               :8000
-│
-├── Core Services (7)
-│   ├── auth-service                  :8081
-│   ├── course-service                :8082
-│   ├── enrollment-service            :8083
-│   ├── payment-service               :8084
-│   ├── notification-service          :8085
-│   ├── analytics-service             :8086
-│   └── organization-service          :8087
-│
-├── Feature Services (10)
-│   ├── learning-path-service         :8088
-│   ├── skills-service                :8089
-│   ├── gamification-service          :8090
-│   ├── idp-service                   :8091
-│   ├── feedback-service              :8092
-│   ├── mentoring-service             :8093
-│   ├── social-learning-service       :8094
-│   ├── compliance-service            :8095
-│   ├── reporting-service             :8096
-│   └── integration-service           :8097
-│
-├── Platform Services (2)
-│   ├── marketplace-service           :8098
-│   └── onboarding-service            :8099
-│
-└── Extension Services (10) - NEW
-    ├── search-service                :8100  # Unified search (Elasticsearch)
-    ├── media-processing-service      :8101  # Video transcoding, thumbnails
-    ├── event-service                 :8102  # Webinars, live sessions
-    ├── authoring-service             :8103  # H5P, SCORM content creation
-    ├── proctoring-service            :8104  # AI exam monitoring
-    ├── assignment-review-service     :8105  # Homework review, auto-grading
-    ├── resource-booking-service      :8106  # Rooms, equipment booking
-    ├── audit-logging-service         :8107  # SOC2/GDPR compliance logs
-    ├── lti-service                   :8108  # LTI 1.3 integration
-    └── bot-platform-service          :8109  # Telegram, Slack, WhatsApp bots
-```
-
-### Архитектурная диаграмма
-
-```
-                    ┌─────────────────────────────────────────┐
-                    │            Load Balancer                │
-                    └───────────────────┬─────────────────────┘
-                                        │
-                    ┌───────────────────▼─────────────────────┐
-                    │         API Gateway (x3 replicas)       │
-                    │         Rate Limiting, JWT Auth         │
-                    └───────────────────┬─────────────────────┘
-                                        │
-        ┌───────────────┬───────────────┼───────────────┬─────────────────┐
-        │               │               │               │                 │
-   ┌────▼────┐    ┌─────▼────┐   ┌──────▼─────┐  ┌──────▼─────┐   ┌───────▼──────┐
-   │  Auth   │    │  Course  │   │ Enrollment │  │  Search    │   │   + 25 more  │
-   │ Service │    │ Service  │   │  Service   │  │  Service   │   │   services   │
-   └────┬────┘    └─────┬────┘   └──────┬─────┘  └──────┬─────┘   └───────┬──────┘
-        │               │               │               │                 │
-        └───────────────┴───────────────┴───────────────┴─────────────────┘
-                                        │
-       ┌────────────────────────────────┼────────────────────────────────┐
-       │                    │           │           │                    │
- ┌─────▼─────┐       ┌──────▼────┐ ┌────▼────┐ ┌────▼─────┐       ┌──────▼──────┐
- │PostgreSQL │       │   Redis   │ │  Kafka  │ │  MinIO   │       │Elasticsearch│
- │  Cluster  │       │  Cluster  │ │ Cluster │ │ Storage  │       │   Cluster   │
- └───────────┘       └───────────┘ └─────────┘ └──────────┘       └─────────────┘
+backend-java/monolith/
+├── src/main/java/com/freelms/lms/
+│   ├── auth/           # Аутентификация, пользователи, JWT
+│   ├── course/         # Курсы, модули, уроки, тесты
+│   ├── enrollment/     # Записи, прогресс, сертификаты
+│   ├── payment/        # Платежи, подписки
+│   ├── common/         # Общие компоненты
+│   │   ├── dto/        # ApiResponse, PagedResponse
+│   │   ├── entity/     # BaseEntity
+│   │   ├── enums/      # UserRole, CourseStatus, etc.
+│   │   ├── exception/  # GlobalExceptionHandler
+│   │   └── security/   # JWT, Filters
+│   └── config/         # SecurityConfig, RedisConfig, etc.
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## Быстрый старт
 
 ### Требования
 
 - Java 21+
 - Maven 3.9+
 - Docker & Docker Compose
-- 8GB+ RAM
+- 4GB+ RAM (рекомендуется 8GB)
 
-### Локальный запуск
+### Вариант 1: Docker Compose (рекомендуется)
 
 ```bash
 # Клонирование репозитория
 git clone https://github.com/your-org/free-lms.git
-cd free-lms/backend-java
+cd free-lms
 
+# Запуск всей системы
+docker-compose -f docker-compose.monolith.yml up -d
+
+# Проверка статуса
+docker-compose -f docker-compose.monolith.yml ps
+
+# Просмотр логов
+docker-compose -f docker-compose.monolith.yml logs -f app
+```
+
+### Вариант 2: Локальный запуск
+
+```bash
 # Запуск инфраструктуры
-docker-compose up -d postgres redis kafka
+docker-compose -f docker-compose.monolith.yml up -d postgres redis kafka
 
 # Сборка проекта
+cd backend-java/monolith
 mvn clean package -DskipTests
 
-# Запуск сервисов (в порядке зависимостей)
-java -jar services/service-registry/target/*.jar &
-java -jar services/config-server/target/*.jar &
-java -jar services/gateway-service/target/*.jar &
-java -jar services/auth-service/target/*.jar &
-# ... остальные сервисы
+# Запуск приложения
+java -jar target/free-lms-monolith-1.0.0-SNAPSHOT.jar
 ```
 
-### Docker Compose (рекомендуется)
+### Проверка работы
 
-```bash
-# Development
-docker-compose up -d
+После запуска доступны:
 
-# Production
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### Kubernetes
-
-```bash
-# Применение конфигурации
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secrets.yaml
-kubectl apply -f k8s/
-
-# Проверка
-kubectl get pods -n freelms
-```
+| Сервис | URL |
+|--------|-----|
+| API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+| Health Check | http://localhost:8080/actuator/health |
+| Prometheus Metrics | http://localhost:8080/actuator/prometheus |
 
 ---
 
-## 📖 Документация
+## Документация
 
 ### Структура проекта
 
 ```
 free-lms/
 ├── backend-java/
-│   ├── common/                 # Общие модули
-│   ├── services/               # Микросервисы (20)
-│   ├── database/
-│   │   └── migrations/         # SQL миграции
-│   ├── k8s/                    # Kubernetes манифесты
-│   ├── load-testing/           # Gatling тесты
-│   ├── docker-compose.yml      # Development
-│   └── docker-compose.prod.yml # Production
+│   ├── monolith/               # Основное приложение
+│   │   ├── src/
+│   │   │   ├── main/
+│   │   │   │   ├── java/       # Java код
+│   │   │   │   └── resources/  # Конфигурации
+│   │   │   └── test/           # Тесты
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   ├── services/               # (legacy) Микросервисы
+│   └── README.md
 ├── docs/
-│   └── landing/                # Landing page
+│   ├── ARCHITECTURE.md         # Архитектурная документация
+│   ├── MIGRATION_GUIDE.md      # Руководство по миграции
+│   ├── QUICK_START_GUIDE.md    # Пошаговое руководство
+│   ├── TROUBLESHOOTING.md      # Решение проблем
+│   └── runbooks/               # Операционные руководства
+├── docker-compose.monolith.yml # Production compose
+├── CONTRIBUTING.md             # Руководство контрибьютора
+├── SECURITY.md                 # Политика безопасности
 └── README.md
 ```
 
 ### API Документация
 
-После запуска доступна по адресам:
-- Swagger UI: `http://localhost:8000/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8000/v3/api-docs`
+После запуска доступна по адресу:
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-### Нагрузочное тестирование
+### Основные API Endpoints
 
-```bash
-cd backend-java/load-testing/gatling
+```http
+# Аутентификация
+POST   /api/v1/auth/register    # Регистрация
+POST   /api/v1/auth/login       # Вход
+POST   /api/v1/auth/refresh     # Обновление токена
+GET    /api/v1/auth/me          # Текущий пользователь
 
-# Запуск тестов (1000 пользователей)
-mvn gatling:test -DbaseUrl=http://localhost:8000 -Dusers=1000
+# Курсы
+GET    /api/v1/courses          # Список курсов
+GET    /api/v1/courses/{id}     # Детали курса
+POST   /api/v1/courses          # Создать курс
+PUT    /api/v1/courses/{id}     # Обновить курс
+DELETE /api/v1/courses/{id}     # Удалить курс
 
-# Smoke test
-mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest
+# Записи на курсы
+POST   /api/v1/enrollments/courses/{id}  # Записаться
+GET    /api/v1/enrollments/my            # Мои записи
+PUT    /api/v1/enrollments/{id}/progress # Обновить прогресс
+
+# Сертификаты
+GET    /api/v1/certificates/my           # Мои сертификаты
+GET    /api/v1/certificates/{id}/verify  # Проверить сертификат
+
+# Платежи
+POST   /api/v1/payments                  # Создать платёж
+GET    /api/v1/payments/{id}             # Статус платежа
 ```
 
 ---
 
-## 🔐 Безопасность
+## Безопасность
 
 ### Реализовано
 
-- ✅ JWT аутентификация с refresh tokens
-- ✅ Rate limiting (100/1000/5000 req/min по ролям)
-- ✅ Security headers (CSP, HSTS, X-Frame-Options)
-- ✅ Input validation и sanitization
-- ✅ SQL injection protection (JPA)
-- ✅ Audit logging
+- JWT аутентификация с refresh tokens
+- Rate limiting
+- Security headers (CSP, HSTS, X-Frame-Options)
+- Input validation и sanitization
+- SQL injection protection (JPA)
+- Audit logging
 
 ### Production Checklist
 
-- [ ] Изменить все пароли в `k8s/secrets.yaml`
+- [ ] Изменить все пароли в конфигурации
 - [ ] Сгенерировать 256-bit JWT secret
 - [ ] Настроить HTTPS/TLS
 - [ ] Включить WAF
@@ -292,7 +292,7 @@ mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest
 
 ---
 
-## 📊 Мониторинг
+## Мониторинг
 
 ### Endpoints
 
@@ -302,73 +302,100 @@ mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest
 | `/actuator/metrics` | Prometheus metrics |
 | `/actuator/info` | Application info |
 
----
-
-## 🗃️ База данных
-
-### Оптимизация
-
-Включает 100+ индексов для оптимальной производительности:
+### Логирование
 
 ```bash
-# Применение миграций
-psql -f database/migrations/V2__add_performance_indexes.sql
-```
+# Просмотр логов в Docker
+docker-compose -f docker-compose.monolith.yml logs -f app
 
-Ключевые индексы:
-- Composite indexes для частых запросов
-- Partial indexes для активных записей
-- Foreign key indexes
+# Логи с фильтрацией
+docker-compose -f docker-compose.monolith.yml logs -f app | grep ERROR
+```
 
 ---
 
-## 🛠️ Разработка
+## База данных
+
+### Единая схема
+
+Все данные хранятся в единой PostgreSQL базе данных с Flyway миграциями:
+
+```
+freelms/
+├── users                  # Пользователи
+├── refresh_tokens         # Refresh токены
+├── courses                # Курсы
+├── course_modules         # Модули курсов
+├── lessons                # Уроки
+├── categories             # Категории
+├── enrollments            # Записи на курсы
+├── lesson_progress        # Прогресс уроков
+├── certificates           # Сертификаты
+├── payments               # Платежи
+├── quizzes                # Тесты
+├── quiz_attempts          # Попытки прохождения тестов
+├── notifications          # Уведомления
+├── badges                 # Бейджи
+├── user_badges            # Бейджи пользователей
+└── audit_logs             # Аудит-логи
+```
+
+### Миграции
+
+```bash
+# Миграции применяются автоматически при запуске
+# Для ручного применения:
+mvn flyway:migrate
+```
+
+---
+
+## Разработка
 
 ### Code Style
 
 - Google Java Style Guide
-- Checkstyle + SpotBugs
-- SonarQube анализ
+- Constructor injection (не @Autowired на поля)
+- Lombok для сокращения boilerplate
 
 ### Тестирование
 
 ```bash
 # Unit tests
+cd backend-java/monolith
 mvn test
 
 # Integration tests
 mvn verify -Pintegration
 
-# Load tests
-mvn gatling:test
+# Тест с покрытием
+mvn test jacoco:report
 ```
 
 ---
 
-## 📈 Roadmap
+## Roadmap
 
 ### Completed
-- [x] Search Service (Elasticsearch integration)
-- [x] Media Processing (Video transcoding, HLS streaming)
-- [x] Event/Webinar Service (Zoom, Teams, Meet integration)
-- [x] Authoring Tools (H5P, SCORM support)
-- [x] Proctoring Service (AI-powered exam monitoring)
-- [x] Assignment Review (Auto-grading, plagiarism detection)
-- [x] Resource Booking (Rooms, equipment, trainers)
-- [x] Audit Logging (SOC2/GDPR compliance)
-- [x] LTI Service (LTI 1.3 Advantage)
-- [x] Bot Platform (Telegram, Slack, WhatsApp)
+- [x] Модульная монолитная архитектура
+- [x] JWT аутентификация
+- [x] Управление курсами
+- [x] Система записей и прогресса
+- [x] Сертификаты
+- [x] Платежи (Stripe)
+- [x] Redis кэширование
+- [x] Kafka события
 
 ### Planned
 - [ ] Mobile apps (iOS, Android)
 - [ ] AI-powered recommendations
 - [ ] xAPI (Tin Can) integration
-- [ ] Multi-tenancy improvements
 - [ ] GraphQL API
+- [ ] Multi-tenancy improvements
 
 ---
 
-## 🤝 Участие в разработке
+## Участие в разработке
 
 1. Fork репозитория
 2. Создайте feature branch (`git checkout -b feature/amazing`)
@@ -376,15 +403,17 @@ mvn gatling:test
 4. Push в branch (`git push origin feature/amazing`)
 5. Создайте Pull Request
 
+Подробнее в [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ---
 
-## 📄 Лицензия
+## Лицензия
 
 MIT License - см. [LICENSE](LICENSE) файл.
 
 ---
 
-## 📞 Контакты
+## Контакты
 
 - Website: [www.smartup24.com](https://www.smartup24.com)
 - Email: opensource@smartup24.com
@@ -394,6 +423,6 @@ MIT License - см. [LICENSE](LICENSE) файл.
 
 <div align="center">
 
-**FREE LMS** — Made with ❤️ for Enterprise Learning
+**FREE LMS** — Made with care for Enterprise Learning
 
 </div>

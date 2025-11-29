@@ -2,7 +2,7 @@
 
 Спасибо за интерес к участию в разработке FREE LMS! Этот документ поможет вам начать.
 
-## 📋 Содержание
+## Содержание
 
 - [Кодекс поведения](#кодекс-поведения)
 - [Как помочь проекту](#как-помочь-проекту)
@@ -16,16 +16,16 @@
 
 Участвуя в проекте, вы соглашаетесь следовать нашему кодексу поведения:
 
-- 🤝 Уважайте других участников
-- 💬 Конструктивная критика приветствуется
-- 🌍 Будьте открыты к различным точкам зрения
-- 🎯 Фокусируйтесь на том, что лучше для проекта
+- Уважайте других участников
+- Конструктивная критика приветствуется
+- Будьте открыты к различным точкам зрения
+- Фокусируйтесь на том, что лучше для проекта
 
 ---
 
 ## Как помочь проекту
 
-### 🐛 Сообщить об ошибке
+### Сообщить об ошибке
 
 Перед созданием issue проверьте, не сообщали ли об этой ошибке ранее.
 
@@ -37,7 +37,7 @@
 - Скриншоты (если применимо)
 - Окружение: ОС, версия Java, версия Docker
 
-### 💡 Предложить улучшение
+### Предложить улучшение
 
 **Опишите:**
 - Что вы хотите добавить/изменить
@@ -45,13 +45,13 @@
 - Примеры использования
 - Возможные альтернативы
 
-### 🔧 Написать код
+### Написать код
 
 Приоритетные области:
-- 🧪 Тесты (покрытие > 80%)
-- 📚 Документация
-- 🐛 Исправление багов
-- ✨ Новые функции (обсудите сначала в issue)
+- Тесты (покрытие > 80%)
+- Документация
+- Исправление багов
+- Новые функции (обсудите сначала в issue)
 
 ---
 
@@ -83,10 +83,10 @@ git remote add upstream https://github.com/original/free-lms.git
 git checkout -b feature/my-feature
 
 # 5. Запустите инфраструктуру
-cd backend-java
-docker compose up -d postgres redis kafka
+docker-compose -f docker-compose.monolith.yml up -d postgres redis kafka
 
 # 6. Соберите проект
+cd backend-java/monolith
 mvn clean install -DskipTests
 
 # 7. Запустите тесты
@@ -97,37 +97,22 @@ mvn test
 
 ```
 free-lms/
-├── backend-java/                 # Java Spring Boot Backend
-│   ├── common/                   # Общая библиотека
-│   ├── services/                 # 22 микросервиса
-│   │   ├── service-registry/     # Eureka (8761)
-│   │   ├── config-server/        # Config (8888)
-│   │   ├── gateway-service/      # Gateway (8000)
-│   │   ├── auth-service/         # Auth (8081)
-│   │   ├── course-service/       # Courses (8082)
-│   │   ├── enrollment-service/   # Enrollments (8083)
-│   │   ├── payment-service/      # Payments (8084)
-│   │   ├── notification-service/ # Notifications (8085)
-│   │   ├── analytics-service/    # Analytics (8086)
-│   │   ├── organization-service/ # Organizations (8087)
-│   │   ├── learning-path-service/# Learning Paths (8088)
-│   │   ├── skills-service/       # Skills (8089)
-│   │   ├── gamification-service/ # Gamification (8090)
-│   │   ├── idp-service/          # IDP (8091)
-│   │   ├── feedback-service/     # Feedback (8092)
-│   │   ├── mentoring-service/    # Mentoring (8093)
-│   │   ├── social-learning-service/ # Social (8094)
-│   │   ├── compliance-service/   # Compliance (8095)
-│   │   ├── reporting-service/    # Reporting (8096)
-│   │   ├── integration-service/  # Integrations (8097)
-│   │   ├── marketplace-service/  # Marketplace (8098)
-│   │   └── onboarding-service/   # Onboarding (8099)
-│   ├── modules/                  # Marketplace модули
-│   ├── database/                 # SQL миграции
-│   ├── k8s/                      # Kubernetes манифесты
-│   └── load-testing/             # Gatling тесты
-├── frontend/                     # Angular 17+ Frontend
-└── docs/                         # Документация
+├── backend-java/
+│   └── monolith/                  # Модульный монолит
+│       ├── src/main/java/
+│       │   └── com/freelms/lms/
+│       │       ├── auth/          # Модуль аутентификации
+│       │       ├── course/        # Модуль курсов
+│       │       ├── enrollment/    # Модуль записей
+│       │       ├── payment/       # Модуль платежей
+│       │       ├── common/        # Общие компоненты
+│       │       └── config/        # Конфигурации
+│       └── src/test/java/         # Тесты
+├── docs/                          # Документация
+│   ├── ARCHITECTURE.md
+│   ├── MIGRATION_GUIDE.md
+│   └── runbooks/
+└── docker-compose.monolith.yml    # Docker Compose
 ```
 
 ---
@@ -139,7 +124,7 @@ free-lms/
 Мы используем **Google Java Style Guide** с небольшими модификациями:
 
 ```java
-// ✅ Правильно
+// Правильно
 public class UserService {
 
     private final UserRepository userRepository;
@@ -154,7 +139,7 @@ public class UserService {
     }
 }
 
-// ❌ Неправильно
+// Неправильно
 public class user_service {
     @Autowired UserRepository repo;
     public User FindById(Long Id) { return repo.findById(Id).get(); }
@@ -167,7 +152,7 @@ public class user_service {
    - Классы: `PascalCase` (UserService, CourseController)
    - Методы/переменные: `camelCase` (findById, userName)
    - Константы: `UPPER_SNAKE_CASE` (MAX_RETRIES)
-   - Пакеты: `lowercase` (com.freelms.auth)
+   - Пакеты: `lowercase` (com.freelms.lms.auth)
 
 2. **Структура класса:**
    - Поля (static, final, обычные)
@@ -245,6 +230,7 @@ git checkout -b feature/add-user-export
 # ...
 
 # Проверьте код
+cd backend-java/monolith
 mvn clean verify
 
 # Зафиксируйте
@@ -275,10 +261,10 @@ git commit -m "feat(auth): add user export functionality"
 
 **Примеры:**
 ```
-feat(gamification): add streak tracking system
+feat(course): add course duplication feature
 fix(auth): resolve JWT token expiration issue
 docs(readme): update installation instructions
-test(course): add unit tests for CourseService
+test(enrollment): add unit tests for EnrollmentService
 ```
 
 ### 4. Pull Request
@@ -325,10 +311,11 @@ Closes #123
 
 ```bash
 # Запуск всех тестов
+cd backend-java/monolith
 mvn test
 
-# Запуск тестов одного модуля
-mvn test -pl services/auth-service
+# Запуск конкретного теста
+mvn test -Dtest=UserServiceTest
 
 # Сборка без тестов
 mvn package -DskipTests
@@ -339,18 +326,21 @@ mvn checkstyle:check
 # Генерация отчёта о покрытии
 mvn jacoco:report
 
-# Запуск одного сервиса
-cd services/auth-service && mvn spring-boot:run
+# Запуск приложения
+mvn spring-boot:run
+
+# Запуск с профилем
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 ---
 
 ## Получение помощи
 
-- 💬 GitHub Discussions — вопросы и обсуждения
-- 🐛 GitHub Issues — баги и предложения
-- 📧 Email: opensource@smartup24.com
-- 🌐 Website: [www.smartup24.com](https://www.smartup24.com)
+- GitHub Discussions — вопросы и обсуждения
+- GitHub Issues — баги и предложения
+- Email: opensource@smartup24.com
+- Website: [www.smartup24.com](https://www.smartup24.com)
 
 ---
 
@@ -360,4 +350,4 @@ cd services/auth-service && mvn spring-boot:run
 
 ---
 
-**Спасибо за ваш вклад в FREE LMS! 🎉**
+**Спасибо за ваш вклад в FREE LMS!**
