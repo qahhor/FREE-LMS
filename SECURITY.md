@@ -1,73 +1,70 @@
 # Security Policy — FREE LMS
 
-## 🛡️ Поддерживаемые версии
+## Поддерживаемые версии
 
 | Версия | Поддержка |
 |--------|-----------|
-| 2.x.x (Java) | ✅ Активная поддержка |
-| 1.x.x (Legacy) | ⚠️ Только критические патчи |
+| 2.x.x (Monolith) | Активная поддержка |
+| 1.x.x (Microservices) | Только критические патчи |
 
 ---
 
-## 🔐 Функции безопасности
+## Функции безопасности
 
 ### Аутентификация и авторизация
 
 | Функция | Описание | Статус |
 |---------|----------|--------|
-| JWT Authentication | Access + Refresh токены | ✅ |
-| Token Rotation | Автоматическая ротация refresh токенов | ✅ |
-| Password Hashing | BCrypt (cost factor 10) | ✅ |
-| RBAC | Role-Based Access Control | ✅ |
-| MFA | Multi-Factor Authentication | 🔄 В разработке |
-| OAuth2/OIDC | Внешняя аутентификация | ✅ |
-| LDAP/AD | Корпоративная интеграция | ✅ |
-| SSO | Single Sign-On | ✅ |
+| JWT Authentication | Access + Refresh токены | Реализовано |
+| Token Rotation | Автоматическая ротация refresh токенов | Реализовано |
+| Password Hashing | BCrypt (cost factor 10) | Реализовано |
+| RBAC | Role-Based Access Control | Реализовано |
+| OAuth2/OIDC | Внешняя аутентификация | Планируется |
+| LDAP/AD | Корпоративная интеграция | Планируется |
+| MFA | Multi-Factor Authentication | Планируется |
 
 ### Защита данных
 
 | Функция | Описание | Статус |
 |---------|----------|--------|
-| TLS/HTTPS | Шифрование в транзите | ✅ |
-| Database Encryption | Шифрование PostgreSQL | ✅ |
-| Secrets Management | Kubernetes Secrets / Vault | ✅ |
-| Data Masking | Маскирование в логах | ✅ |
-| CORS | Настраиваемая политика | ✅ |
-| GDPR Compliance | Право на удаление данных | ✅ |
+| TLS/HTTPS | Шифрование в транзите | Реализовано |
+| Database Encryption | Шифрование PostgreSQL | Реализовано |
+| Secrets Management | Environment variables | Реализовано |
+| Data Masking | Маскирование в логах | Реализовано |
+| CORS | Настраиваемая политика | Реализовано |
+| GDPR Compliance | Право на удаление данных | Реализовано |
 
 ### API Security
 
 | Функция | Описание | Статус |
 |---------|----------|--------|
-| Rate Limiting | 100/1000/5000 req/min по ролям | ✅ |
-| Input Validation | Jakarta Validation + Custom | ✅ |
-| SQL Injection | JPA Parameterized Queries | ✅ |
-| XSS Prevention | Content Security Policy | ✅ |
-| CSRF Protection | Stateless JWT (disabled) | ✅ |
-| Security Headers | HSTS, X-Frame-Options, etc. | ✅ |
+| Rate Limiting | Настраиваемые лимиты | Реализовано |
+| Input Validation | Jakarta Validation | Реализовано |
+| SQL Injection | JPA Parameterized Queries | Реализовано |
+| XSS Prevention | Content Security Policy | Реализовано |
+| CSRF Protection | Stateless JWT | Реализовано |
+| Security Headers | HSTS, X-Frame-Options, etc. | Реализовано |
 
 ### Аудит и мониторинг
 
 | Функция | Описание | Статус |
 |---------|----------|--------|
-| Audit Logging | Все действия пользователей | ✅ |
-| Login Attempts | Отслеживание попыток входа | ✅ |
-| IP Tracking | Логирование IP адресов | ✅ |
-| E-Signatures | Электронные подписи | ✅ |
-| Compliance Reports | GDPR/ФЗ-152 отчёты | ✅ |
+| Audit Logging | Все действия пользователей | Реализовано |
+| Login Attempts | Отслеживание попыток входа | Реализовано |
+| IP Tracking | Логирование IP адресов | Реализовано |
 
 ---
 
-## 🔧 Конфигурация безопасности
+## Конфигурация безопасности
 
-### Production Security Headers
+### Security Headers
 
 ```java
-// ProductionSecurityConfig.java
+// SecurityConfig.java
 http.headers(headers -> headers
     .contentSecurityPolicy(csp -> csp
         .policyDirectives("default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline'; " +
+            "script-src 'self'; " +
             "style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' data: https:; " +
             "frame-ancestors 'self'")
@@ -78,20 +75,8 @@ http.headers(headers -> headers
     .httpStrictTransportSecurity(hsts -> hsts
         .includeSubDomains(true)
         .maxAgeInSeconds(31536000)
-        .preload(true)
     )
 );
-```
-
-### Rate Limiting
-
-```yaml
-# Конфигурация по ролям
-rate-limit:
-  anonymous: 100    # запросов в минуту
-  user: 1000        # запросов в минуту
-  admin: 5000       # запросов в минуту
-  burst-multiplier: 1.25
 ```
 
 ### JWT Configuration
@@ -101,12 +86,11 @@ jwt:
   secret: ${JWT_SECRET}  # Минимум 256 бит
   access-token-expiration: 15m
   refresh-token-expiration: 7d
-  issuer: smartup24.com
 ```
 
 ---
 
-## 📋 Production Security Checklist
+## Production Security Checklist
 
 ### Перед развертыванием
 
@@ -127,24 +111,21 @@ jwt:
 - [ ] **Network**:
   - [ ] HTTPS только (redirect HTTP → HTTPS)
   - [ ] Firewall настроен
-  - [ ] VPN для внутренних сервисов
   - [ ] DDoS защита
 
 - [ ] **Docker**:
   - [ ] Non-root пользователь
-  - [ ] Read-only файловая система
   - [ ] Resource limits
   - [ ] Security scanning образов
 
 - [ ] **Kubernetes**:
   - [ ] Network Policies
-  - [ ] Pod Security Policies
   - [ ] Secrets encryption at rest
   - [ ] RBAC для кластера
 
 ---
 
-## 🚨 Сообщить об уязвимости
+## Сообщить об уязвимости
 
 ### Responsible Disclosure
 
@@ -152,8 +133,7 @@ jwt:
 
 **Как сообщить:**
 
-1. 📧 Email: security@smartup24.com
-2. 🔐 PGP Key: [Download](https://www.smartup24.com/.well-known/security.txt)
+1. Email: security@smartup24.com
 
 ### Что включить в отчёт
 
@@ -161,7 +141,7 @@ jwt:
 Subject: [SECURITY] Brief description
 
 1. Vulnerability Type: (XSS, SQL Injection, Auth Bypass, etc.)
-2. Affected Component: (auth-service, gateway, etc.)
+2. Affected Component: (auth module, course module, etc.)
 3. Steps to Reproduce:
    - Step 1
    - Step 2
@@ -180,30 +160,9 @@ Subject: [SECURITY] Brief description
 | Medium | 7 дней | 30 дней |
 | Low | 14 дней | 90 дней |
 
-### Вознаграждение
-
-Мы признаём вклад исследователей безопасности:
-- Упоминание в Hall of Fame
-- Благодарственное письмо
-- Свяжитесь для обсуждения программы bug bounty
-
 ---
 
-## 🔍 Известные уязвимости
-
-### Устранённые
-
-| CVE | Severity | Component | Fixed In |
-|-----|----------|-----------|----------|
-| - | - | - | - |
-
-### В процессе исправления
-
-Нет известных уязвимостей.
-
----
-
-## 📚 Security Best Practices
+## Security Best Practices
 
 ### Для разработчиков
 
@@ -215,29 +174,23 @@ Subject: [SECURITY] Brief description
    }
    ```
 
-2. **Output Encoding**
+2. **Parameterized Queries**
    ```java
-   // Используйте HtmlUtils для пользовательского ввода
-   String safe = HtmlUtils.htmlEscape(userInput);
-   ```
-
-3. **Parameterized Queries**
-   ```java
-   // ✅ Правильно
+   // Правильно
    @Query("SELECT u FROM User u WHERE u.email = :email")
    User findByEmail(@Param("email") String email);
 
-   // ❌ Неправильно
+   // Неправильно - SQL injection!
    @Query("SELECT u FROM User u WHERE u.email = '" + email + "'")
    ```
 
-4. **Secrets Management**
+3. **Secrets Management**
    ```java
-   // ✅ Правильно
+   // Правильно
    @Value("${jwt.secret}")
    private String jwtSecret;
 
-   // ❌ Неправильно
+   // Неправильно
    private String jwtSecret = "hardcoded-secret";
    ```
 
@@ -251,7 +204,6 @@ Subject: [SECURITY] Brief description
 
 2. **Мониторинг**
    - Настройте алерты на неудачные входы
-   - Мониторьте rate limiting срабатывания
    - Отслеживайте аномальный трафик
 
 3. **Backup**
@@ -261,29 +213,25 @@ Subject: [SECURITY] Brief description
 
 ---
 
-## 📜 Compliance
+## Compliance
 
 ### Поддерживаемые стандарты
 
-| Стандарт | Статус | Детали |
-|----------|--------|--------|
-| GDPR | ✅ | Право на удаление, экспорт данных |
-| ФЗ-152 | ✅ | Локализация данных РФ |
-| OWASP Top 10 | ✅ | Все уязвимости адресованы |
-| SOC 2 | 🔄 | В процессе |
-| ISO 27001 | 📋 | Планируется |
+| Стандарт | Статус |
+|----------|--------|
+| OWASP Top 10 | Все уязвимости адресованы |
+| GDPR | Право на удаление, экспорт данных |
 
 ---
 
-## 📞 Контакты
+## Контакты
 
 - **Security Team**: security@smartup24.com
 - **Website**: [www.smartup24.com](https://www.smartup24.com)
 - **Bug Reports**: GitHub Issues (non-security)
-- **Emergency**: +7-XXX-XXX-XXXX (24/7)
 
 ---
 
-**Последнее обновление**: 2024-11-26
+**Последнее обновление**: 2024-11-29
 
-**Версия документа**: 2.0
+**Версия документа**: 3.0

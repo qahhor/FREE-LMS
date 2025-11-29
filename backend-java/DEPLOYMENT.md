@@ -19,18 +19,18 @@
 
 | Ресурс | Значение |
 |--------|----------|
-| CPU | 4 cores |
-| RAM | 16 GB |
-| Disk | 50 GB SSD |
+| CPU | 2 cores |
+| RAM | 4 GB |
+| Disk | 20 GB SSD |
 | OS | Ubuntu 22.04+ / CentOS 8+ |
 
 ### Рекомендуемые требования (Production)
 
 | Ресурс | Значение |
 |--------|----------|
-| CPU | 16+ cores |
-| RAM | 64+ GB |
-| Disk | 500 GB+ NVMe SSD |
+| CPU | 4+ cores |
+| RAM | 8+ GB |
+| Disk | 100 GB+ NVMe SSD |
 | Network | 1 Gbps |
 
 ### Целевые метрики
@@ -41,12 +41,14 @@
 | Concurrent users | 1,000 |
 | Организации | 200 |
 | RPS | 1,000+ |
-| Latency p95 | < 500ms |
+| Latency p95 | < 200ms |
 | Uptime | 99.9% |
 
 ---
 
 ## Архитектура развертывания
+
+### Модульный монолит
 
 ```
                     ┌─────────────────────────────────┐
@@ -55,18 +57,10 @@
                     └───────────────┬─────────────────┘
                                     │
                     ┌───────────────▼─────────────────┐
-                    │       API Gateway (x3)          │
-                    │         + Rate Limiting         │
+                    │     FREE LMS Application        │
+                    │         (x3 replicas)           │
+                    │         Port 8080               │
                     └───────────────┬─────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-   ┌────▼────┐                 ┌────▼────┐                 ┌────▼────┐
-   │  Auth   │                 │ Course  │                 │ + 17    │
-   │  (x2)   │                 │  (x3)   │                 │services │
-   └────┬────┘                 └────┬────┘                 └────┬────┘
-        │                           │                           │
-        └───────────────────────────┼───────────────────────────┘
                                     │
         ┌───────────────────────────┼───────────────────────────┐
         │                           │                           │
@@ -76,6 +70,18 @@
    │ + Replica│                │  (x3)   │                 │  (x3)   │
    └──────────┘                └─────────┘                 └─────────┘
 ```
+
+### Компоненты
+
+| Компонент | Описание | Порт |
+|-----------|----------|------|
+| Application | FREE LMS монолит | 8080 |
+| PostgreSQL | Основная БД | 5432 |
+| Redis | Кэш и сессии | 6379 |
+| Kafka | Event streaming | 9092 |
+| Elasticsearch | Поиск (опционально) | 9200 |
+| MongoDB | Документы (опционально) | 27017 |
+| MinIO | Файловое хранилище | 9000 |
 
 ---
 
@@ -99,29 +105,34 @@ sudo chmod +x /usr/local/bin/docker-compose
 ### 2. Настройка environment
 
 ```bash
-cd backend-java
+cd free-lms
 
 # Создание .env файла
 cat > .env << 'EOF'
 # Database
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=freelms
 DB_USER=freelms_prod
 DB_PASSWORD=<STRONG_PASSWORD_HERE>
 
 # JWT (generate with: openssl rand -base64 32)
 JWT_SECRET=<256_BIT_SECRET_HERE>
-
-# Service Discovery
-EUREKA_USER=eureka_admin
-EUREKA_PASSWORD=<STRONG_PASSWORD_HERE>
-
-# Config Server
-CONFIG_USER=config_admin
-CONFIG_PASSWORD=<STRONG_PASSWORD_HERE>
+JWT_EXPIRATION=900000
+JWT_REFRESH_EXPIRATION=604800000
 
 # Redis
-REDIS_PASSWORD=<STRONG_PASSWORD_HERE>
+REDIS_HOST=redis
+REDIS_PORT=6379
 
-# External Services
+# Kafka
+KAFKA_SERVERS=kafka:9092
+
+# Application
+SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=prod
+
+# External Services (optional)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 EOF
@@ -132,27 +143,24 @@ chmod 600 .env
 ### 3. Запуск production
 
 ```bash
-# Сборка образов
-docker-compose -f docker-compose.prod.yml build
-
-# Запуск
-docker-compose -f docker-compose.prod.yml up -d
+# Сборка и запуск
+docker-compose -f docker-compose.monolith.yml up -d --build
 
 # Проверка статуса
-docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.monolith.yml ps
 
 # Просмотр логов
-docker-compose -f docker-compose.prod.yml logs -f gateway-service
+docker-compose -f docker-compose.monolith.yml logs -f app
 ```
 
 ### 4. Healthcheck
 
 ```bash
-# Проверка всех сервисов
-for port in 8761 8888 8000 8081 8082 8083; do
-  echo "Checking port $port..."
-  curl -s http://localhost:$port/actuator/health | jq .status
-done
+# Проверка приложения
+curl http://localhost:8080/actuator/health
+
+# Ожидаемый ответ
+{"status":"UP","components":{"db":{"status":"UP"},"redis":{"status":"UP"}}}
 ```
 
 ---
@@ -163,51 +171,92 @@ done
 
 ```bash
 # Создание namespace
-kubectl apply -f k8s/namespace.yaml
+kubectl create namespace freelms
 
-# Создание secrets (ВАЖНО: замените значения!)
+# Создание secrets
 kubectl create secret generic freelms-secrets \
   --namespace=freelms \
   --from-literal=DB_USER=freelms_prod \
   --from-literal=DB_PASSWORD=<PASSWORD> \
-  --from-literal=JWT_SECRET=<256_BIT_SECRET> \
-  --from-literal=REDIS_PASSWORD=<PASSWORD>
+  --from-literal=JWT_SECRET=<256_BIT_SECRET>
 
-# Применение ConfigMap
-kubectl apply -f k8s/configmap.yaml
+# ConfigMap
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: freelms-config
+  namespace: freelms
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  DB_HOST: "postgres-service"
+  REDIS_HOST: "redis-service"
+  KAFKA_SERVERS: "kafka-service:9092"
+EOF
 ```
 
-### 2. Развертывание инфраструктуры
+### 2. Развертывание приложения
 
-```bash
-# PostgreSQL
-kubectl apply -f k8s/postgres-statefulset.yaml
-
-# Redis (используйте Helm для production)
-helm install redis bitnami/redis \
-  --namespace=freelms \
-  --set auth.password=<PASSWORD> \
-  --set replica.replicaCount=3
-
-# Kafka (используйте Helm для production)
-helm install kafka bitnami/kafka \
-  --namespace=freelms \
-  --set replicaCount=3
+```yaml
+# app-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freelms-app
+  namespace: freelms
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: freelms-app
+  template:
+    metadata:
+      labels:
+        app: freelms-app
+    spec:
+      containers:
+      - name: app
+        image: freelms/app:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: freelms-config
+        - secretRef:
+            name: freelms-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
 ```
 
-### 3. Развертывание сервисов
-
 ```bash
-# Применение всех deployments
-kubectl apply -f k8s/
+# Применение
+kubectl apply -f app-deployment.yaml
+kubectl apply -f app-service.yaml
 
-# Проверка статуса
+# Проверка
 kubectl get pods -n freelms
-kubectl get services -n freelms
-kubectl get hpa -n freelms
+kubectl logs -n freelms -l app=freelms-app -f
 ```
 
-### 4. Настройка Ingress
+### 3. Настройка Ingress
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -231,9 +280,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: gateway-service
+                name: freelms-service
                 port:
-                  number: 80
+                  number: 8080
 ```
 
 ---
@@ -242,10 +291,28 @@ spec:
 
 ### Production профиль
 
-Каждый сервис должен запускаться с:
+```yaml
+# application-prod.yml
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
 
-```bash
-SPRING_PROFILES_ACTIVE=production
+logging:
+  level:
+    root: WARN
+    com.freelms: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+
+server:
+  error:
+    include-stacktrace: never
 ```
 
 ### Ключевые настройки
@@ -269,7 +336,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --namespace=monitoring \
   --create-namespace
 
-# Добавление ServiceMonitor для FREE LMS
+# ServiceMonitor для FREE LMS
 kubectl apply -f - <<EOF
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -279,7 +346,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/part-of: freelms
+      app: freelms-app
   endpoints:
     - port: http
       path: /actuator/prometheus
@@ -290,11 +357,24 @@ EOF
 
 | Метрика | Alert threshold |
 |---------|-----------------|
-| Response time p95 | > 500ms |
+| Response time p95 | > 200ms |
 | Error rate | > 1% |
 | CPU usage | > 80% |
 | Memory usage | > 85% |
 | Database connections | > 90% pool |
+
+### Health Endpoints
+
+```bash
+# Liveness (для перезапуска)
+curl http://localhost:8080/actuator/health/liveness
+
+# Readiness (для трафика)
+curl http://localhost:8080/actuator/health/readiness
+
+# Prometheus metrics
+curl http://localhost:8080/actuator/prometheus
+```
 
 ---
 
@@ -305,12 +385,10 @@ EOF
 - [ ] Изменены все пароли по умолчанию
 - [ ] JWT secret - 256 bit, криптографически случайный
 - [ ] TLS/HTTPS настроен
-- [ ] Rate limiting включён
 - [ ] CORS ограничен доверенными доменами
 - [ ] Actuator endpoints защищены
 - [ ] Database credentials в secrets
 - [ ] Network policies настроены
-- [ ] Pod Security Policies включены
 - [ ] Image scanning выполнен
 
 ### Генерация безопасного JWT secret
@@ -319,33 +397,87 @@ EOF
 openssl rand -base64 32
 ```
 
+### Network Policy (Kubernetes)
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: freelms-network-policy
+  namespace: freelms
+spec:
+  podSelector:
+    matchLabels:
+      app: freelms-app
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    - podSelector:
+        matchLabels:
+          app: redis
+    - podSelector:
+        matchLabels:
+          app: kafka
+```
+
 ---
 
 ## Масштабирование
 
 ### Горизонтальное масштабирование
 
-HPA настроен для автоматического масштабирования:
+```yaml
+# HPA для автомасштабирования
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: freelms-hpa
+  namespace: freelms
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: freelms-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+```
 
-| Сервис | Min | Max | CPU target |
-|--------|-----|-----|------------|
-| gateway | 3 | 10 | 70% |
-| auth | 2 | 5 | 70% |
-| course | 3 | 8 | 70% |
-| enrollment | 2 | 6 | 70% |
-| gamification | 2 | 5 | 70% |
+### Рекомендации по масштабированию
 
-### Масштабирование БД
-
-Для 100,000 пользователей рекомендуется:
-
-- **PostgreSQL**: Primary + 2 Read Replicas
-- **Redis**: 3-node cluster
-- **Kafka**: 3 brokers
+| Компонент | Стратегия |
+|-----------|-----------|
+| Application | Горизонтальное (replicas) |
+| PostgreSQL | Primary + Read Replicas |
+| Redis | Cluster mode |
+| Kafka | 3+ brokers |
 
 ### Connection pooling
-
-Рекомендуемые настройки HikariCP:
 
 ```yaml
 spring:
@@ -362,27 +494,25 @@ spring:
 
 ## Troubleshooting
 
-### Сервис не запускается
+### Приложение не запускается
 
 ```bash
 # Проверка логов
-kubectl logs -n freelms <pod-name> --previous
+docker-compose -f docker-compose.monolith.yml logs app
 
-# Проверка events
+# Kubernetes
+kubectl logs -n freelms -l app=freelms-app --previous
 kubectl describe pod -n freelms <pod-name>
-
-# Проверка ресурсов
-kubectl top pods -n freelms
 ```
 
 ### Проблемы с базой данных
 
 ```bash
 # Проверка подключения
-kubectl exec -it -n freelms postgres-auth-0 -- psql -U freelms_prod -d freelms_auth -c "SELECT 1"
+docker exec -it postgres psql -U freelms -d freelms -c "SELECT 1"
 
 # Проверка connections
-kubectl exec -it -n freelms postgres-auth-0 -- psql -U freelms_prod -d freelms_auth -c "SELECT count(*) FROM pg_stat_activity"
+docker exec -it postgres psql -U freelms -d freelms -c "SELECT count(*) FROM pg_stat_activity"
 ```
 
 ### High latency

@@ -1,14 +1,14 @@
-# 🔧 FREE LMS — Руководство по устранению неполадок
+# FREE LMS — Руководство по устранению неполадок
 
 Подробное руководство по решению типичных проблем при развертывании и работе с FREE LMS.
 
 ---
 
-## 📋 Содержание
+## Содержание
 
 1. [Проблемы с Docker](#1-проблемы-с-docker)
 2. [Проблемы с базой данных](#2-проблемы-с-базой-данных)
-3. [Проблемы с сервисами](#3-проблемы-с-сервисами)
+3. [Проблемы с приложением](#3-проблемы-с-приложением)
 4. [Проблемы с памятью](#4-проблемы-с-памятью)
 5. [Проблемы с сетью](#5-проблемы-с-сетью)
 6. [Проблемы со сборкой](#6-проблемы-со-сборкой)
@@ -18,7 +18,7 @@
 
 ## 1. Проблемы с Docker
 
-### 🔴 Docker не запускается
+### Docker не запускается
 
 **Симптомы:**
 ```
@@ -41,14 +41,14 @@ sudo systemctl start docker
 # Включить автозапуск
 sudo systemctl enable docker
 
-# Добавить себя в группу docker (чтобы не писать sudo)
+# Добавить себя в группу docker
 sudo usermod -aG docker $USER
 # После этого — выйдите и войдите в систему
 ```
 
 ---
 
-### 🔴 Ошибка "Permission denied"
+### Ошибка "Permission denied"
 
 **Симптомы:**
 ```
@@ -68,54 +68,32 @@ newgrp docker
 
 ---
 
-### 🔴 Контейнеры не запускаются
+### Контейнер не запускается
 
 **Симптомы:**
 ```
-Container freelms-auth exited with code 1
+Container freelms-app exited with code 1
 ```
 
 **Диагностика:**
 ```bash
 # Посмотреть логи проблемного контейнера
-docker compose logs auth-service
+docker-compose -f docker-compose.monolith.yml logs app
 
 # Посмотреть последние события
 docker events --since="5m"
 ```
 
 **Частые причины:**
-1. **Не хватает памяти** — см. раздел "Проблемы с памятью"
-2. **Порт занят** — см. раздел "Проблемы с сетью"
-3. **Зависимость не запустилась** — запустите сначала postgres и redis
-
----
-
-### 🔴 Образы не скачиваются
-
-**Симптомы:**
-```
-Error response from daemon: pull access denied
-```
-
-**Решение:**
-```bash
-# Проверить интернет-соединение
-ping google.com
-
-# Попробовать скачать образ вручную
-docker pull postgres:16-alpine
-
-# Если проблема с прокси
-export HTTP_PROXY=http://proxy.example.com:8080
-export HTTPS_PROXY=http://proxy.example.com:8080
-```
+1. Не хватает памяти — см. раздел "Проблемы с памятью"
+2. Порт занят — см. раздел "Проблемы с сетью"
+3. База данных не готова — подождите и перезапустите
 
 ---
 
 ## 2. Проблемы с базой данных
 
-### 🔴 PostgreSQL не запускается
+### PostgreSQL не запускается
 
 **Симптомы:**
 ```
@@ -125,19 +103,19 @@ FATAL: password authentication failed for user "lms_user"
 **Решение:**
 ```bash
 # Удалить старые данные и пересоздать
-docker compose down -v
-docker compose up -d postgres
+docker-compose -f docker-compose.monolith.yml down -v
+docker-compose -f docker-compose.monolith.yml up -d postgres
 
 # Подождать 30 секунд
 sleep 30
 
 # Проверить
-docker compose logs postgres
+docker-compose -f docker-compose.monolith.yml logs postgres
 ```
 
 ---
 
-### 🔴 Ошибка подключения к БД
+### Ошибка подключения к БД
 
 **Симптомы:**
 ```
@@ -147,19 +125,19 @@ Connection refused to postgres:5432
 **Диагностика:**
 ```bash
 # Проверить статус PostgreSQL
-docker compose ps postgres
+docker-compose -f docker-compose.monolith.yml ps postgres
 
 # Проверить, слушает ли порт
 docker exec freelms-postgres pg_isready -U lms_user
 
 # Посмотреть логи
-docker compose logs postgres | tail -50
+docker-compose -f docker-compose.monolith.yml logs postgres | tail -50
 ```
 
 **Решение:**
 ```bash
 # Перезапустить PostgreSQL
-docker compose restart postgres
+docker-compose -f docker-compose.monolith.yml restart postgres
 
 # Подождать и проверить
 sleep 30
@@ -168,28 +146,7 @@ docker exec freelms-postgres pg_isready -U lms_user
 
 ---
 
-### 🔴 База данных повреждена
-
-**Симптомы:**
-```
-PANIC: could not locate a valid checkpoint record
-```
-
-**Решение (ВНИМАНИЕ: данные будут потеряны!):**
-```bash
-# Остановить всё
-docker compose down
-
-# Удалить данные PostgreSQL
-docker volume rm backend-java_postgres-data
-
-# Запустить заново
-docker compose up -d postgres
-```
-
----
-
-### 🔴 Redis не работает
+### Redis не работает
 
 **Симптомы:**
 ```
@@ -199,7 +156,7 @@ Error connecting to Redis on localhost:6379
 **Диагностика:**
 ```bash
 # Проверить статус
-docker compose ps redis
+docker-compose -f docker-compose.monolith.yml ps redis
 
 # Попробовать подключиться
 docker exec -it freelms-redis redis-cli PING
@@ -207,98 +164,80 @@ docker exec -it freelms-redis redis-cli PING
 
 **Решение:**
 ```bash
-docker compose restart redis
+docker-compose -f docker-compose.monolith.yml restart redis
 ```
 
 ---
 
-## 3. Проблемы с сервисами
+## 3. Проблемы с приложением
 
-### 🔴 Сервис не регистрируется в Eureka
-
-**Симптомы:**
-- Сервис не появляется на http://localhost:8761
-- В логах: `Connection refused to localhost:8761`
-
-**Решение:**
-1. Убедитесь, что Service Registry запущен первым
-2. Подождите 30-60 секунд после запуска
-3. Проверьте настройки:
-
-```bash
-# Логи Service Registry
-docker compose logs service-registry | tail -50
-
-# Логи проблемного сервиса
-docker compose logs auth-service | grep -i eureka
-```
-
----
-
-### 🔴 Gateway возвращает 503
+### Приложение не запускается
 
 **Симптомы:**
-```
-503 Service Unavailable
-```
-
-**Причина:** Backend сервис не доступен или не зарегистрирован.
+- В логах нет `Started FreeLmsApplication`
+- HTTP 503 на всех endpoints
 
 **Диагностика:**
 ```bash
-# Проверить зарегистрированные сервисы
-curl -u eureka:eureka123 http://localhost:8761/eureka/apps
+# Посмотреть логи
+docker-compose -f docker-compose.monolith.yml logs app | tail -100
 
-# Проверить конкретный сервис
-curl http://localhost:8081/actuator/health
+# Проверить health
+curl http://localhost:8080/actuator/health
 ```
 
-**Решение:**
+**Частые причины и решения:**
+
+1. **База данных не готова:**
 ```bash
-# Перезапустить нужный сервис
-docker compose restart auth-service
+# Подождать запуска postgres
+sleep 30
+docker-compose -f docker-compose.monolith.yml restart app
+```
 
-# Подождать регистрации (30-60 секунд)
-sleep 60
-
-# Проверить
-curl http://localhost:8000/api/v1/auth/health
+2. **Неверные настройки:**
+```bash
+# Проверить переменные окружения
+docker-compose -f docker-compose.monolith.yml config
 ```
 
 ---
 
-### 🔴 Сервис запускается долго
+### Приложение запускается долго
 
 **Симптомы:**
 - Контейнер в статусе "starting" более 2 минут
-- В логах нет ошибок
 
 **Причины и решения:**
 
 1. **Мало памяти:**
-   ```bash
-   # Проверить использование памяти
-   docker stats --no-stream
-   ```
+```bash
+# Проверить использование памяти
+docker stats --no-stream
+```
 
 2. **Медленный диск:**
-   - Используйте SSD вместо HDD
+- Используйте SSD вместо HDD
 
-3. **Много сервисов:**
-   ```bash
-   # Запускайте по очереди
-   docker compose up -d service-registry
-   sleep 30
-   docker compose up -d config-server
-   sleep 30
-   docker compose up -d gateway-service auth-service
-   ```
+---
+
+### HTTP 500 ошибки
+
+**Диагностика:**
+```bash
+# Посмотреть логи ошибок
+docker-compose -f docker-compose.monolith.yml logs app | grep -i "error\|exception"
+```
+
+**Решение:**
+- Проверьте stack trace в логах
+- Убедитесь, что все зависимости (postgres, redis, kafka) работают
 
 ---
 
 ## 4. Проблемы с памятью
 
-### 🔴 Контейнеры убиваются (OOM Killed)
+### Контейнеры убиваются (OOM Killed)
 
 **Симптомы:**
 ```
@@ -309,15 +248,12 @@ Container killed due to memory limit
 ```bash
 # Проверить использование памяти
 docker stats
-
-# Посмотреть лимиты
-docker inspect freelms-auth | grep -A 5 Memory
 ```
 
 **Решение для Docker Desktop (Windows/macOS):**
 1. Откройте Docker Desktop
 2. Перейдите в Settings → Resources
-3. Увеличьте Memory до 8-12 GB
+3. Увеличьте Memory до 4-8 GB
 4. Нажмите "Apply & Restart"
 
 **Решение для Linux:**
@@ -330,14 +266,11 @@ sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
-
-# Добавить в автозагрузку
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
 ---
 
-### 🔴 Java OutOfMemoryError
+### Java OutOfMemoryError
 
 **Симптомы:**
 ```
@@ -346,15 +279,15 @@ java.lang.OutOfMemoryError: Java heap space
 
 **Решение:**
 
-Увеличьте память для JVM в docker-compose.yml:
+Установите переменные окружения в docker-compose:
 ```yaml
 services:
-  auth-service:
+  app:
     environment:
       JAVA_OPTS: "-Xmx1g -Xms512m"
 ```
 
-Или для разработки:
+Или для локальной разработки:
 ```bash
 export JAVA_OPTS="-Xmx2g -Xms1g"
 mvn spring-boot:run
@@ -364,105 +297,65 @@ mvn spring-boot:run
 
 ## 5. Проблемы с сетью
 
-### 🔴 Порт уже занят
+### Порт уже занят
 
 **Симптомы:**
 ```
-Bind for 0.0.0.0:8000 failed: port is already allocated
+Bind for 0.0.0.0:8080 failed: port is already allocated
 ```
 
 **Диагностика:**
 
 **Windows:**
 ```powershell
-netstat -ano | findstr :8000
-# Найдите PID и завершите процесс
+netstat -ano | findstr :8080
 taskkill /PID <PID> /F
 ```
 
 **macOS/Linux:**
 ```bash
-# Найти процесс
-lsof -i :8000
-
-# Или
-sudo ss -tulpn | grep 8000
-
-# Завершить процесс
+lsof -i :8080
 kill -9 <PID>
 ```
 
 **Решение через Docker:**
 ```bash
 # Остановить все контейнеры
-docker compose down
+docker-compose -f docker-compose.monolith.yml down
 
 # Проверить, не остались ли контейнеры
 docker ps -a | grep freelms
-
-# Удалить если остались
-docker rm -f $(docker ps -a | grep freelms | awk '{print $1}')
 ```
 
 ---
 
-### 🔴 Контейнеры не видят друг друга
-
-**Симптомы:**
-```
-Unknown host: postgres
-```
-
-**Решение:**
-```bash
-# Проверить сеть Docker
-docker network ls
-
-# Проверить, что контейнеры в одной сети
-docker network inspect backend-java_default
-
-# Пересоздать сети
-docker compose down
-docker network prune -f
-docker compose up -d
-```
-
----
-
-### 🔴 Не работает localhost
+### Не работает localhost
 
 **Симптомы:**
 - В браузере "Не удается получить доступ к сайту"
 
 **Проверки:**
 
-1. **Проверьте, что Docker запущен:**
-   ```bash
-   docker ps
-   ```
+1. **Docker запущен:**
+```bash
+docker ps
+```
 
-2. **Проверьте порт:**
-   ```bash
-   curl http://localhost:8000/actuator/health
-   ```
+2. **Контейнер работает:**
+```bash
+docker-compose -f docker-compose.monolith.yml ps
+```
 
-3. **Проверьте firewall (Linux):**
-   ```bash
-   sudo ufw status
-   sudo ufw allow 8000
-   ```
-
-4. **Для WSL2 (Windows):**
-   - Используйте IP WSL вместо localhost:
-   ```bash
-   ip addr show eth0 | grep inet
-   ```
+3. **Проверить порт:**
+```bash
+curl http://localhost:8080/actuator/health
+```
 
 ---
 
 ## 6. Проблемы со сборкой
 
-### 🔴 Maven не находит зависимости
+### Maven не находит зависимости
 
 **Симптомы:**
 ```
@@ -473,7 +366,6 @@ Could not resolve dependencies for project
 ```bash
 # Очистить кэш Maven
 rm -rf ~/.m2/repository/com/freelms
-rm -rf ~/.m2/repository/org/springframework
 
 # Пересобрать с обновлением
 mvn clean install -DskipTests -U
@@ -481,7 +373,7 @@ mvn clean install -DskipTests -U
 
 ---
 
-### 🔴 Ошибка компиляции Java
+### Ошибка компиляции Java
 
 **Симптомы:**
 ```
@@ -498,14 +390,11 @@ java -version
 
 # Убедитесь, что JAVA_HOME указывает на Java 21
 echo $JAVA_HOME
-
-# Для Linux/macOS
-export JAVA_HOME=/path/to/java21
 ```
 
 ---
 
-### 🔴 Lombok не работает
+### Lombok не работает
 
 **Симптомы:**
 ```
@@ -513,22 +402,19 @@ cannot find symbol: method getEmail()
 ```
 
 **Решение:**
-
 1. Убедитесь, что Lombok установлен в IDE
 2. Включите Annotation Processing:
-   - **IntelliJ:** Settings → Build → Compiler → Annotation Processors → Enable
-   - **VS Code:** Установите расширение "Lombok Annotations Support"
-
-3. Пересоберите проект:
-   ```bash
-   mvn clean compile
-   ```
+   - IntelliJ: Settings → Build → Compiler → Annotation Processors → Enable
+3. Пересоберите:
+```bash
+mvn clean compile
+```
 
 ---
 
 ## 7. Проблемы с авторизацией
 
-### 🔴 401 Unauthorized
+### 401 Unauthorized
 
 **Симптомы:**
 ```json
@@ -543,18 +429,18 @@ cannot find symbol: method getEmail()
 **Решение:**
 ```bash
 # Получите новый токен
-curl -X POST http://localhost:8000/api/v1/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@test.com","password":"Test123!"}'
 
 # Используйте токен из ответа
-curl http://localhost:8000/api/v1/users/me \
+curl http://localhost:8080/api/v1/auth/me \
   -H "Authorization: Bearer <YOUR_TOKEN>"
 ```
 
 ---
 
-### 🔴 403 Forbidden
+### 403 Forbidden
 
 **Симптомы:**
 ```json
@@ -565,35 +451,29 @@ curl http://localhost:8000/api/v1/users/me \
 
 **Решение:**
 1. Проверьте роль пользователя
-2. Убедитесь, что endpoint доступен для вашей роли
-3. Для admin endpoints нужна роль ADMIN
+2. Для admin endpoints нужна роль ADMIN
 
 ---
 
-### 🔴 Токен не работает после перезапуска
+### Токен не работает после перезапуска
 
 **Причина:** JWT secret изменился.
 
 **Решение:**
 ```bash
-# Убедитесь, что JWT_SECRET одинаковый для всех сервисов
-# Проверьте .env файл
-cat .env | grep JWT
-
+# Убедитесь, что JWT_SECRET постоянный
 # Получите новый токен после перезапуска
 ```
 
 ---
 
-## 🆘 Последний resort — полный сброс
+## Последний resort — полный сброс
 
 Если ничего не помогает:
 
 ```bash
-cd backend-java
-
 # 1. Остановить всё
-docker compose down -v
+docker-compose -f docker-compose.monolith.yml down -v
 
 # 2. Удалить все образы проекта
 docker images | grep freelms | awk '{print $3}' | xargs docker rmi -f 2>/dev/null
@@ -606,27 +486,28 @@ docker volume prune -f
 rm -rf ~/.m2/repository/com/freelms
 
 # 5. Собрать заново
+cd backend-java/monolith
 mvn clean package -DskipTests
 
 # 6. Запустить
-docker compose up -d --build
+cd ../..
+docker-compose -f docker-compose.monolith.yml up -d --build
 
 # 7. Следить за логами
-docker compose logs -f
+docker-compose -f docker-compose.monolith.yml logs -f
 ```
 
 ---
 
-## 📞 Всё ещё не работает?
+## Всё ещё не работает?
 
 1. **Соберите информацию:**
-   ```bash
-   docker compose logs > logs.txt
-   docker compose ps > status.txt
-   mvn -version > versions.txt
-   java -version >> versions.txt
-   docker --version >> versions.txt
-   ```
+```bash
+docker-compose -f docker-compose.monolith.yml logs > logs.txt
+docker-compose -f docker-compose.monolith.yml ps > status.txt
+java -version > versions.txt
+docker --version >> versions.txt
+```
 
 2. **Создайте issue на GitHub** с приложенными файлами
 
@@ -636,6 +517,6 @@ docker compose logs -f
 
 <div align="center">
 
-**Удачи в решении проблем! 🍀**
+**Удачи в решении проблем!**
 
 </div>

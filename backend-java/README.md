@@ -4,23 +4,21 @@
 
 ![Java](https://img.shields.io/badge/Java-21_LTS-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green)
-![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.1-blue)
+![Architecture](https://img.shields.io/badge/Architecture-Modular%20Monolith-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![Microservices](https://img.shields.io/badge/Microservices-22-purple)
 
-**Enterprise Learning Management System — Microservices Architecture**
+**Enterprise Learning Management System — Modular Monolith Architecture**
 
 </div>
 
 ---
 
-## 📋 Содержание
+## Содержание
 
 - [Архитектура](#архитектура)
 - [Технологический стек](#технологический-стек)
-- [Микросервисы](#микросервисы)
-- [Быстрый старт](#быстрый-старт)
 - [Структура проекта](#структура-проекта)
+- [Быстрый старт](#быстрый-старт)
 - [API документация](#api-документация)
 - [Конфигурация](#конфигурация)
 - [База данных](#база-данных)
@@ -29,218 +27,198 @@
 
 ---
 
-## 🏗️ Архитектура
+## Архитектура
 
-### Обзор системы
+### Модульный монолит
+
+FREE LMS использует модульную монолитную архитектуру — оптимальный баланс между простотой монолита и модульностью микросервисов.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                  CLIENTS                                         │
-│                      (Web / Mobile / Third-party API)                           │
+│                              FREE LMS MONOLITH                                   │
+│                                                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐              │
+│  │   Auth Module    │  │  Course Module   │  │ Enrollment Module│              │
+│  │                  │  │                  │  │                  │              │
+│  │ • User Entity    │  │ • Course Entity  │  │ • Enrollment     │              │
+│  │ • JWT Provider   │  │ • Module Entity  │  │ • Progress       │              │
+│  │ • Auth Service   │  │ • Lesson Entity  │  │ • Certificate    │              │
+│  │ • Auth Controller│  │ • Quiz Entity    │  │ • Quiz Attempts  │              │
+│  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘              │
+│           │                     │                     │                         │
+│           └─────────────────────┼─────────────────────┘                         │
+│                                 │                                               │
+│                    ┌────────────▼────────────┐                                  │
+│                    │     Common Module       │                                  │
+│                    │                         │                                  │
+│                    │ • BaseEntity            │                                  │
+│                    │ • ApiResponse           │                                  │
+│                    │ • Security Config       │                                  │
+│                    │ • Exception Handlers    │                                  │
+│                    └─────────────────────────┘                                  │
+│                                                                                  │
+│  ┌──────────────────┐                                                           │
+│  │  Payment Module  │                                                           │
+│  │                  │                                                           │
+│  │ • Payment Entity │                                                           │
+│  │ • Stripe Service │                                                           │
+│  └──────────────────┘                                                           │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                        │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           API GATEWAY (Port 8000)                                │
-│                    Spring Cloud Gateway + Rate Limiting + JWT                    │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                       │
-         ┌────────────────────────────┬┴┬────────────────────────────┐
-         ▼                            ▼ ▼                            ▼
-┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│  CORE SERVICES  │         │FEATURE SERVICES │         │  INFRASTRUCTURE │
-│                 │         │                 │         │                 │
-│ • Auth (8081)   │         │ • Learning Path │         │ • Eureka (8761) │
-│ • Course (8082) │         │ • Skills        │         │ • Config (8888) │
-│ • Enrollment    │         │ • Gamification  │         │                 │
-│ • Payment       │         │ • IDP           │         │                 │
-│ • Notification  │         │ • Feedback      │         │                 │
-│ • Analytics     │         │ • Mentoring     │         │                 │
-│ • Organization  │         │ • Social        │         │                 │
-│                 │         │ • Compliance    │         │                 │
-│                 │         │ • Reporting     │         │                 │
-│                 │         │ • Integration   │         │                 │
-└────────┬────────┘         └────────┬────────┘         └─────────────────┘
-         │                           │
-         └───────────────┬───────────┘
-                         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              DATA LAYER                                          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
-│  │ PostgreSQL   │    │    Redis     │    │    Kafka     │    │    MinIO     │   │
-│  │   (Данные)   │    │    (Кэш)     │    │  (События)   │    │   (Файлы)    │   │
-│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────────┘
+          ┌────────────────────────────┼────────────────────────────┐
+          │                            │                            │
+     ┌────▼────┐                  ┌────▼────┐                  ┌────▼────┐
+     │PostgreSQL│                 │  Redis  │                  │  Kafka  │
+     │   16    │                  │    7    │                  │(events) │
+     └─────────┘                  └─────────┘                  └─────────┘
 ```
 
-### Event-Driven Architecture
+### Преимущества архитектуры
 
-```
-┌────────────┐     ┌────────────┐     ┌────────────┐
-│   Course   │────▶│   Kafka    │────▶│ Enrollment │
-│  Service   │     │   Topics   │     │  Service   │
-└────────────┘     └────────────┘     └────────────┘
-                         │
-         ┌───────────────┼───────────────┐
-         ▼               ▼               ▼
-┌────────────┐   ┌────────────┐   ┌────────────┐
-│Notification│   │Gamification│   │ Analytics  │
-│  Service   │   │  Service   │   │  Service   │
-└────────────┘   └────────────┘   └────────────┘
-```
-
-### 🔌 Почему разные порты для сервисов?
-
-> **Важно понимать:** Разделение портов — это стандартная практика микросервисной архитектуры, а не особенность конкретного языка или фреймворка.
-
-#### Локальная разработка (одна машина)
-
-При запуске всех сервисов на одном компьютере **разные порты обязательны**:
-
-```
-┌─────────────────────────────────────────────────────┐
-│              Компьютер разработчика                  │
-├─────────────────────────────────────────────────────┤
-│  auth-service     → localhost:8081                  │
-│  course-service   → localhost:8082   ← Разные порты│
-│  payment-service  → localhost:8084      необходимы  │
-└─────────────────────────────────────────────────────┘
-```
-
-**Причина:** Операционная система не позволяет двум процессам слушать один и тот же порт одновременно.
-
-#### Production (Kubernetes / Docker)
-
-В production каждый сервис работает в **изолированном контейнере** со своим сетевым пространством:
-
-```
-┌─────────────────────────────────────────────────────┐
-│                 Kubernetes Cluster                   │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  ┌──────────────┐  ┌──────────────┐                 │
-│  │  Pod: auth   │  │ Pod: course  │                 │
-│  │  port: 8080  │  │  port: 8080  │ ← Один порт!   │
-│  └──────────────┘  └──────────────┘                 │
-│          │                │                          │
-│          └───────┬────────┘                          │
-│                  ▼                                   │
-│         ┌────────────────┐                          │
-│         │  API Gateway   │                          │
-│         │   port: 443    │ ← Единая точка входа    │
-│         └────────────────┘                          │
-│                  │                                   │
-└──────────────────│──────────────────────────────────┘
-                   ▼
-              Пользователи
-```
-
-**Преимущества такой архитектуры:**
-
-| Аспект | Описание |
-|--------|----------|
-| **Изоляция** | Каждый сервис независим, сбой одного не затрагивает другие |
-| **Масштабирование** | Можно масштабировать отдельные сервисы (3x auth, 5x course) |
-| **Развертывание** | Обновление одного сервиса без остановки остальных |
-| **Балансировка** | Kubernetes автоматически распределяет нагрузку между репликами |
-| **Мониторинг** | Отдельные метрики и логи для каждого сервиса |
-
-#### Как маршрутизируются запросы
-
-```
-Пользователь → api.smartup24.com/api/courses/123
-                         │
-                         ▼
-                  ┌──────────────┐
-                  │ API Gateway  │  Анализирует URL
-                  │  port: 443   │
-                  └──────┬───────┘
-                         │ /api/courses/* → course-service
-                         ▼
-              ┌──────────────────────┐
-              │ Service Discovery    │  Находит адрес
-              │      (Eureka)        │  сервиса
-              └──────────┬───────────┘
-                         │
-                         ▼
-              ┌──────────────────────┐
-              │   course-service     │  Обрабатывает
-              │   (любая реплика)    │  запрос
-              └──────────────────────┘
-```
-
-> **Итог:** В production пользователи обращаются только к API Gateway (порт 443). Внутренняя маршрутизация происходит по именам сервисов через Service Discovery, а не по портам.
+| Аспект | Микросервисы (было) | Модульный монолит (стало) |
+|--------|---------------------|---------------------------|
+| Время запуска | ~3-5 минут | ~30 секунд |
+| Потребление RAM | 8-16 GB | 1-2 GB |
+| Latency вызовов | 5-50ms (HTTP) | <1ms (method call) |
+| Количество контейнеров | 35+ | 7 |
+| Сложность деплоя | Высокая | Низкая |
+| Отладка | Distributed tracing | Stack trace |
+| Транзакции | Saga pattern | ACID |
 
 ---
 
-## 🛠️ Технологический стек
+## Технологический стек
 
 | Категория | Технология | Версия |
 |-----------|------------|--------|
 | **Language** | Java | 21 LTS |
 | **Framework** | Spring Boot | 3.2.5 |
-| **Cloud** | Spring Cloud | 2023.0.1 |
 | **Database** | PostgreSQL | 16 |
 | **Cache** | Redis | 7 |
 | **Message Broker** | Apache Kafka | 3.5+ |
-| **Service Discovery** | Netflix Eureka | Latest |
-| **API Gateway** | Spring Cloud Gateway | Latest |
+| **Search** | Elasticsearch | 8.11 |
+| **Document Store** | MongoDB | 7 |
+| **Object Storage** | MinIO | Latest |
 | **ORM** | Spring Data JPA / Hibernate | 6.x |
 | **Security** | Spring Security + JWT | 6.x |
+| **Migration** | Flyway | 9.x |
 | **API Docs** | SpringDoc OpenAPI | 2.7.0 |
 | **Build Tool** | Maven | 3.9+ |
-| **Container** | Docker + Docker Compose | Latest |
-| **Orchestration** | Kubernetes | 1.28+ |
+| **Container** | Docker | 24+ |
 
 ---
 
-## 🔌 Микросервисы
+## Структура проекта
 
-### Infrastructure Services (3)
-
-| Сервис | Порт | Описание |
-|--------|------|----------|
-| **service-registry** | 8761 | Eureka Service Discovery |
-| **config-server** | 8888 | Centralized Configuration |
-| **gateway-service** | 8000 | API Gateway + Rate Limiting |
-
-### Core Services (7)
-
-| Сервис | Порт | Описание |
-|--------|------|----------|
-| **auth-service** | 8081 | Authentication, Users, JWT, Roles |
-| **course-service** | 8082 | Courses, Modules, Lessons, Quizzes |
-| **enrollment-service** | 8083 | Enrollments, Progress, Certificates |
-| **payment-service** | 8084 | Subscriptions, Stripe, Payme, Click |
-| **notification-service** | 8085 | Email, Push, Telegram, WebSocket |
-| **analytics-service** | 8086 | AI Recommendations, Smart Search |
-| **organization-service** | 8087 | Multi-tenancy, SSO, SCORM, Webinars |
-
-### Feature Services (10)
-
-| Сервис | Порт | Описание |
-|--------|------|----------|
-| **learning-path-service** | 8088 | Learning Paths, Career Tracks, Prerequisites |
-| **skills-service** | 8089 | Skills Matrix, Gap Analysis, Competencies |
-| **gamification-service** | 8090 | Leaderboards, Achievements, Streaks, Challenges |
-| **idp-service** | 8091 | Individual Development Plans, Goals |
-| **feedback-service** | 8092 | 360° Feedback, Surveys, Reviews |
-| **mentoring-service** | 8093 | Mentor Matching, Sessions, Tracking |
-| **social-learning-service** | 8094 | Q&A Forum, Study Groups, Peer Content |
-| **compliance-service** | 8095 | Mandatory Training, Certifications, Audit |
-| **reporting-service** | 8096 | Dashboards, BI Export, ROI Analytics |
-| **integration-service** | 8097 | HR Systems, Calendar, Video, SSO |
-
-### Platform Services (2)
-
-| Сервис | Порт | Описание |
-|--------|------|----------|
-| **marketplace-service** | 8098 | Module Store, Course Marketplace, Plugins |
-| **onboarding-service** | 8099 | Guided Tours, Checklists, Contextual Help |
+```
+backend-java/
+├── monolith/                            # Основное приложение
+│   ├── pom.xml                          # Maven конфигурация
+│   ├── Dockerfile                       # Multi-stage Docker build
+│   ├── README.md                        # Документация монолита
+│   │
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/freelms/lms/
+│       │   │   │
+│       │   │   ├── FreeLmsApplication.java    # Entry point
+│       │   │   │
+│       │   │   ├── auth/                      # Auth Module
+│       │   │   │   ├── controller/
+│       │   │   │   │   ├── AuthController.java
+│       │   │   │   │   └── UserController.java
+│       │   │   │   ├── service/
+│       │   │   │   │   ├── AuthService.java
+│       │   │   │   │   └── UserService.java
+│       │   │   │   ├── entity/
+│       │   │   │   │   ├── User.java
+│       │   │   │   │   └── RefreshToken.java
+│       │   │   │   ├── dto/
+│       │   │   │   ├── repository/
+│       │   │   │   └── mapper/
+│       │   │   │
+│       │   │   ├── course/                    # Course Module
+│       │   │   │   ├── controller/
+│       │   │   │   ├── service/
+│       │   │   │   ├── entity/
+│       │   │   │   │   ├── Course.java
+│       │   │   │   │   ├── CourseModule.java
+│       │   │   │   │   ├── Lesson.java
+│       │   │   │   │   └── Quiz.java
+│       │   │   │   ├── dto/
+│       │   │   │   └── repository/
+│       │   │   │
+│       │   │   ├── enrollment/                # Enrollment Module
+│       │   │   │   ├── controller/
+│       │   │   │   ├── service/
+│       │   │   │   ├── entity/
+│       │   │   │   │   ├── Enrollment.java
+│       │   │   │   │   ├── LessonProgress.java
+│       │   │   │   │   ├── Certificate.java
+│       │   │   │   │   └── QuizAttempt.java
+│       │   │   │   ├── dto/
+│       │   │   │   └── repository/
+│       │   │   │
+│       │   │   ├── payment/                   # Payment Module
+│       │   │   │   ├── controller/
+│       │   │   │   ├── service/
+│       │   │   │   ├── entity/
+│       │   │   │   ├── dto/
+│       │   │   │   └── repository/
+│       │   │   │
+│       │   │   ├── common/                    # Shared Components
+│       │   │   │   ├── dto/
+│       │   │   │   │   ├── ApiResponse.java
+│       │   │   │   │   └── PagedResponse.java
+│       │   │   │   ├── entity/
+│       │   │   │   │   └── BaseEntity.java
+│       │   │   │   ├── enums/
+│       │   │   │   │   ├── UserRole.java
+│       │   │   │   │   ├── CourseStatus.java
+│       │   │   │   │   └── EnrollmentStatus.java
+│       │   │   │   ├── exception/
+│       │   │   │   │   ├── GlobalExceptionHandler.java
+│       │   │   │   │   ├── ResourceNotFoundException.java
+│       │   │   │   │   └── BadRequestException.java
+│       │   │   │   └── security/
+│       │   │   │       ├── JwtTokenProvider.java
+│       │   │   │       ├── JwtAuthenticationFilter.java
+│       │   │   │       ├── UserPrincipal.java
+│       │   │   │       └── CurrentUser.java
+│       │   │   │
+│       │   │   └── config/                    # Configuration
+│       │   │       ├── SecurityConfig.java
+│       │   │       ├── RedisConfig.java
+│       │   │       ├── KafkaConfig.java
+│       │   │       └── OpenApiConfig.java
+│       │   │
+│       │   └── resources/
+│       │       ├── application.yml            # Main config
+│       │       └── db/migration/
+│       │           └── V1__initial_schema.sql # Flyway migration
+│       │
+│       └── test/                              # Tests
+│           ├── java/com/freelms/lms/
+│           │   ├── auth/
+│           │   │   ├── service/AuthServiceTest.java
+│           │   │   └── controller/AuthControllerTest.java
+│           │   ├── course/
+│           │   │   └── service/CourseServiceTest.java
+│           │   └── enrollment/
+│           │       └── service/EnrollmentServiceTest.java
+│           └── resources/
+│               └── application-test.yml
+│
+├── services/                            # (legacy) Микросервисы
+│   └── ...                              # Для обратной совместимости
+│
+├── docker-compose.yml                   # Development
+└── DEPLOYMENT.md                        # Deployment guide
+```
 
 ---
 
-## 🚀 Быстрый старт
+## Быстрый старт
 
 ### Требования
 
@@ -254,207 +232,104 @@ docker compose version # 2.20+
 ### Вариант 1: Docker Compose (Рекомендуется)
 
 ```bash
-# Клонировать репозиторий
-git clone https://github.com/your-org/smartup-lms.git
-cd smartup-lms/backend-java
+# Перейти в корень проекта
+cd free-lms
 
 # Запустить всё
-docker compose up -d
+docker-compose -f docker-compose.monolith.yml up -d
 
 # Проверить статус
-docker compose ps
+docker-compose -f docker-compose.monolith.yml ps
 
 # Смотреть логи
-docker compose logs -f gateway-service
+docker-compose -f docker-compose.monolith.yml logs -f app
 ```
 
 ### Вариант 2: Локальная разработка
 
 ```bash
 # 1. Запустить инфраструктуру
-docker compose up -d postgres redis kafka zookeeper minio
+docker-compose -f docker-compose.monolith.yml up -d postgres redis kafka
 
 # 2. Собрать проект
+cd backend-java/monolith
 mvn clean package -DskipTests
 
-# 3. Запустить сервисы по порядку
-
-# Терминал 1: Service Registry
-cd services/service-registry && mvn spring-boot:run
-
-# Терминал 2: Config Server (подождите 30 сек)
-cd services/config-server && mvn spring-boot:run
-
-# Терминал 3: Gateway
-cd services/gateway-service && mvn spring-boot:run
-
-# Терминал 4+: Business Services
-cd services/auth-service && mvn spring-boot:run
-cd services/course-service && mvn spring-boot:run
-# ... и т.д.
+# 3. Запустить приложение
+mvn spring-boot:run
+# или
+java -jar target/free-lms-monolith-1.0.0-SNAPSHOT.jar
 ```
 
 ### Проверка работы
 
 ```bash
 # Health check
-curl http://localhost:8000/actuator/health
-
-# Eureka Dashboard
-open http://localhost:8761
-# Login: eureka / eureka123
+curl http://localhost:8080/actuator/health
 
 # Swagger UI
-open http://localhost:8000/swagger-ui.html
+open http://localhost:8080/swagger-ui.html
 ```
 
 ---
 
-## 📁 Структура проекта
+## API документация
 
-```
-backend-java/
-├── pom.xml                              # Parent POM
-├── docker-compose.yml                   # Development
-├── docker-compose.prod.yml              # Production
-├── Dockerfile                           # Multi-stage build
-├── DEPLOYMENT.md                        # Deployment guide
-│
-├── common/                              # Shared library
-│   └── src/main/java/com/freelms/common/
-│       ├── config/                      # Security, Rate Limiting
-│       ├── dto/                         # Common DTOs
-│       ├── entity/                      # Base entities
-│       ├── enums/                       # Enumerations
-│       ├── exception/                   # Exception handling
-│       ├── security/                    # JWT, Auth
-│       ├── validation/                  # Custom validators
-│       └── util/                        # Utilities
-│
-├── services/                            # 22 Microservices
-│   ├── service-registry/                # Eureka Server
-│   ├── config-server/                   # Config Server
-│   ├── gateway-service/                 # API Gateway
-│   ├── auth-service/                    # Authentication
-│   ├── course-service/                  # Courses
-│   ├── enrollment-service/              # Enrollments
-│   ├── payment-service/                 # Payments
-│   ├── notification-service/            # Notifications
-│   ├── analytics-service/               # Analytics
-│   ├── organization-service/            # Organizations
-│   ├── learning-path-service/           # Learning Paths
-│   ├── skills-service/                  # Skills
-│   ├── gamification-service/            # Gamification
-│   ├── idp-service/                     # IDP
-│   ├── feedback-service/                # Feedback
-│   ├── mentoring-service/               # Mentoring
-│   ├── social-learning-service/         # Social Learning
-│   ├── compliance-service/              # Compliance
-│   ├── reporting-service/               # Reporting
-│   ├── integration-service/             # Integrations
-│   ├── marketplace-service/             # Marketplace
-│   └── onboarding-service/              # Onboarding
-│
-├── modules/                             # Marketplace Modules
-│   └── cbu-currency-rates/              # CBU Currency Rates Module
-│
-├── database/
-│   └── migrations/                      # SQL migrations
-│       └── V2__add_performance_indexes.sql
-│
-├── k8s/                                 # Kubernetes manifests
-│   ├── namespace.yaml
-│   ├── configmap.yaml
-│   ├── secrets.yaml
-│   ├── gateway-deployment.yaml
-│   ├── auth-deployment.yaml
-│   └── postgres-statefulset.yaml
-│
-└── load-testing/                        # Performance tests
-    └── gatling/
-        ├── pom.xml
-        └── src/test/scala/
-            └── FreeLmsLoadTest.scala
-```
+### Swagger UI
 
----
-
-## 📖 API документация
-
-### Gateway Endpoints
-
-| Сервис | Swagger UI |
-|--------|------------|
-| **Gateway** | http://localhost:8000/swagger-ui.html |
-
-### Direct Service Endpoints
-
-| Сервис | URL |
-|--------|-----|
-| Auth | http://localhost:8081/swagger-ui.html |
-| Course | http://localhost:8082/swagger-ui.html |
-| Enrollment | http://localhost:8083/swagger-ui.html |
-| Payment | http://localhost:8084/swagger-ui.html |
-| Notification | http://localhost:8085/swagger-ui.html |
-| Analytics | http://localhost:8086/swagger-ui.html |
-| Organization | http://localhost:8087/swagger-ui.html |
-| Marketplace | http://localhost:8098/swagger-ui.html |
-| Onboarding | http://localhost:8099/swagger-ui.html |
+После запуска доступен по адресу: http://localhost:8080/swagger-ui.html
 
 ### Основные API Endpoints
 
 ```http
 # Authentication
-POST   /api/v1/auth/register
-POST   /api/v1/auth/login
-POST   /api/v1/auth/refresh
-GET    /api/v1/auth/me
+POST   /api/v1/auth/register           # Регистрация
+POST   /api/v1/auth/login              # Вход
+POST   /api/v1/auth/refresh            # Обновление токена
+GET    /api/v1/auth/me                 # Текущий пользователь
+POST   /api/v1/auth/logout             # Выход
+
+# Users
+GET    /api/v1/users                   # Список пользователей (admin)
+GET    /api/v1/users/{id}              # Получить пользователя
+PUT    /api/v1/users/{id}              # Обновить профиль
+PUT    /api/v1/users/{id}/password     # Сменить пароль
 
 # Courses
-GET    /api/v1/courses
-GET    /api/v1/courses/{id}
-POST   /api/v1/courses
-PUT    /api/v1/courses/{id}
-DELETE /api/v1/courses/{id}
+GET    /api/v1/courses                 # Список курсов
+GET    /api/v1/courses/{id}            # Детали курса
+POST   /api/v1/courses                 # Создать курс
+PUT    /api/v1/courses/{id}            # Обновить курс
+DELETE /api/v1/courses/{id}            # Удалить курс
+POST   /api/v1/courses/{id}/publish    # Опубликовать
+
+# Categories
+GET    /api/v1/categories              # Список категорий
+POST   /api/v1/categories              # Создать категорию
 
 # Enrollments
-POST   /api/v1/enrollments/courses/{id}
-GET    /api/v1/enrollments/my
-PUT    /api/v1/enrollments/{id}/progress
+POST   /api/v1/enrollments/courses/{id}     # Записаться на курс
+GET    /api/v1/enrollments/my               # Мои записи
+GET    /api/v1/enrollments/{id}             # Детали записи
+PUT    /api/v1/enrollments/{id}/progress    # Обновить прогресс
+DELETE /api/v1/enrollments/{id}             # Отменить запись
 
-# Gamification
-GET    /api/v1/gamification/leaderboard
-GET    /api/v1/gamification/achievements/my
-GET    /api/v1/gamification/streaks/my
+# Certificates
+GET    /api/v1/certificates/my              # Мои сертификаты
+GET    /api/v1/certificates/{id}            # Получить сертификат
+GET    /api/v1/certificates/{id}/verify     # Проверить сертификат
+GET    /api/v1/certificates/{id}/download   # Скачать PDF
 
-# Learning Paths
-GET    /api/v1/learning-paths
-POST   /api/v1/learning-paths/{id}/enroll
-GET    /api/v1/learning-paths/my/progress
-
-# Skills
-GET    /api/v1/skills/matrix
-GET    /api/v1/skills/gaps
-POST   /api/v1/skills/{id}/endorse
-
-# Marketplace
-GET    /api/v1/marketplace/items
-GET    /api/v1/marketplace/modules
-GET    /api/v1/marketplace/courses
-POST   /api/v1/organizations/{id}/modules/{slug}/install
-GET    /api/v1/organizations/{id}/modules
-
-# Onboarding
-GET    /api/v1/onboarding/flows
-POST   /api/v1/onboarding/flows/{slug}/start
-GET    /api/v1/onboarding/progress
-POST   /api/v1/onboarding/progress/{id}/complete-step
-GET    /api/v1/onboarding/checklists
+# Payments
+POST   /api/v1/payments                     # Создать платёж
+GET    /api/v1/payments/{id}                # Статус платежа
+GET    /api/v1/payments/my                  # Мои платежи
+POST   /api/v1/payments/webhook             # Stripe webhook
 ```
 
 ---
 
-## ⚙️ Конфигурация
+## Конфигурация
 
 ### Environment Variables
 
@@ -462,6 +337,7 @@ GET    /api/v1/onboarding/checklists
 # Database
 DB_HOST=localhost
 DB_PORT=5432
+DB_NAME=freelms
 DB_USER=lms_user
 DB_PASSWORD=lms_password
 
@@ -474,178 +350,230 @@ KAFKA_SERVERS=localhost:9092
 
 # JWT (минимум 256 бит)
 JWT_SECRET=your-256-bit-secret-key-change-in-production
+JWT_EXPIRATION=900000           # 15 минут в ms
+JWT_REFRESH_EXPIRATION=604800000  # 7 дней в ms
 
-# Eureka
-EUREKA_HOST=localhost
-EUREKA_PORT=8761
-EUREKA_USER=eureka
-EUREKA_PASSWORD=eureka123
-
-# Config Server
-CONFIG_HOST=localhost
-CONFIG_PORT=8888
-CONFIG_USER=config
-CONFIG_PASSWORD=config123
+# Application
+SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=dev
 ```
 
 ### Application Profiles
 
 | Profile | Использование |
 |---------|---------------|
-| `default` | Локальная разработка |
+| `dev` | Локальная разработка |
 | `docker` | Docker Compose |
-| `production` | Production deployment |
+| `prod` | Production |
 | `test` | Тестирование |
 
 ```bash
 # Запуск с профилем
-mvn spring-boot:run -Dspring-boot.run.profiles=docker
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Или через переменную окружения
+export SPRING_PROFILES_ACTIVE=prod
+java -jar app.jar
 ```
 
 ---
 
-## 🗃️ База данных
+## База данных
 
-### Схема баз данных
+### Единая схема
 
-Каждый сервис имеет отдельную базу данных:
+Все модули используют единую PostgreSQL базу данных:
 
-| База данных | Сервис |
-|-------------|--------|
-| freelms_auth | auth-service |
-| freelms_courses | course-service |
-| freelms_enrollments | enrollment-service |
-| freelms_payments | payment-service |
-| freelms_notifications | notification-service |
-| freelms_analytics | analytics-service |
-| freelms_organizations | organization-service |
-| freelms_learning_paths | learning-path-service |
-| freelms_skills | skills-service |
-| freelms_gamification | gamification-service |
-| freelms_idp | idp-service |
-| freelms_feedback | feedback-service |
-| freelms_mentoring | mentoring-service |
-| freelms_social | social-learning-service |
-| freelms_compliance | compliance-service |
-| freelms_reporting | reporting-service |
-| freelms_integrations | integration-service |
-| freelms_marketplace | marketplace-service |
-| freelms_onboarding | onboarding-service |
+```
+freelms/
+├── users                    # Пользователи
+├── refresh_tokens           # Refresh токены
+├── courses                  # Курсы
+├── course_modules           # Модули курсов
+├── lessons                  # Уроки
+├── categories               # Категории
+├── tags                     # Теги
+├── course_tags              # Связь курсов и тегов
+├── enrollments              # Записи на курсы
+├── lesson_progress          # Прогресс уроков
+├── certificates             # Сертификаты
+├── payments                 # Платежи
+├── quizzes                  # Тесты
+├── quiz_questions           # Вопросы тестов
+├── quiz_answers             # Ответы
+├── quiz_attempts            # Попытки прохождения
+├── notifications            # Уведомления
+├── badges                   # Бейджи
+├── user_badges              # Бейджи пользователей
+└── audit_logs               # Аудит-логи
+```
 
-### Индексы
+### Flyway миграции
 
 ```bash
-# Применение индексов для оптимизации
-psql -f database/migrations/V2__add_performance_indexes.sql
-```
+# Миграции применяются автоматически при запуске
 
-Включает 100+ индексов для:
-- Foreign Key relationships
-- Composite queries
-- Partial indexes for active records
+# Ручной запуск миграций
+mvn flyway:migrate
+
+# Проверка статуса
+mvn flyway:info
+
+# Очистка (ОСТОРОЖНО!)
+mvn flyway:clean
+```
 
 ---
 
-## 🧪 Тестирование
+## Тестирование
 
 ### Unit Tests
 
 ```bash
 # Все тесты
+cd backend-java/monolith
 mvn test
 
-# Конкретный сервис
-mvn test -pl services/auth-service
-
-# С покрытием
+# С отчётом о покрытии
 mvn test jacoco:report
+# Отчёт: target/site/jacoco/index.html
+
+# Конкретный тест
+mvn test -Dtest=AuthServiceTest
 ```
 
 ### Integration Tests
 
 ```bash
+# Запуск интеграционных тестов
 mvn verify -Pintegration
+
+# С тестовой БД (H2)
+mvn test -Dspring.profiles.active=test
 ```
 
-### Load Testing (Gatling)
+### Структура тестов
 
-```bash
-cd load-testing/gatling
-
-# Standard test (1000 users)
-mvn gatling:test -DbaseUrl=http://localhost:8000 -Dusers=1000
-
-# Smoke test
-mvn gatling:test -Dgatling.simulationClass=freelms.SmokeTest
 ```
-
-**Target Metrics:**
-- Response time p95: < 500ms
-- Error rate: < 1%
-- RPS: 1000+
+src/test/java/com/freelms/lms/
+├── FreeLmsApplicationTests.java    # Context loading
+├── auth/
+│   ├── service/
+│   │   └── AuthServiceTest.java    # Unit tests
+│   └── controller/
+│       └── AuthControllerTest.java # Integration tests
+├── course/
+│   └── service/
+│       └── CourseServiceTest.java
+└── enrollment/
+    └── service/
+        └── EnrollmentServiceTest.java
+```
 
 ---
 
-## 🚢 Развертывание
+## Развертывание
 
 ### Docker
 
 ```bash
-# Development
-docker compose up -d
+# Сборка образа
+cd backend-java/monolith
+docker build -t freelms/app:latest .
 
-# Production
-docker compose -f docker-compose.prod.yml up -d
+# Запуск с Docker Compose
+docker-compose -f docker-compose.monolith.yml up -d
 
-# Rebuild specific service
-docker compose build auth-service
-docker compose up -d auth-service
+# Проверка
+docker-compose -f docker-compose.monolith.yml ps
+docker-compose -f docker-compose.monolith.yml logs -f app
 ```
 
 ### Kubernetes
 
 ```bash
-# Apply all manifests
-kubectl apply -f k8s/
+# Применить манифесты
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/app-deployment.yaml
+kubectl apply -f k8s/app-service.yaml
 
-# Check status
+# Проверить
 kubectl get pods -n freelms
-kubectl get services -n freelms
-
-# View logs
-kubectl logs -n freelms -l app=gateway-service -f
+kubectl logs -n freelms -l app=freelms-app -f
 ```
 
 ### Scaling
 
 ```bash
-# Docker
-docker compose up -d --scale auth-service=3
+# Docker Compose
+# Монолит масштабируется горизонтально через load balancer
 
-# Kubernetes (HPA автоматически)
+# Kubernetes
+kubectl scale deployment freelms-app --replicas=3 -n freelms
+
+# Проверить HPA
 kubectl get hpa -n freelms
 ```
 
 ---
 
-## 📊 Мониторинг
+## Мониторинг
 
 ### Health Endpoints
 
 ```bash
-curl http://localhost:8000/actuator/health
-curl http://localhost:8000/actuator/metrics
-curl http://localhost:8000/actuator/prometheus
+# Liveness probe
+curl http://localhost:8080/actuator/health/liveness
+
+# Readiness probe
+curl http://localhost:8080/actuator/health/readiness
+
+# Full health
+curl http://localhost:8080/actuator/health
+
+# Prometheus metrics
+curl http://localhost:8080/actuator/prometheus
 ```
 
-### Eureka Dashboard
+### Логирование
 
-- URL: http://localhost:8761
-- Credentials: eureka / eureka123
+```yaml
+# application.yml
+logging:
+  level:
+    root: INFO
+    com.freelms: DEBUG
+    org.springframework.security: DEBUG
+```
 
 ---
 
-## 📄 Лицензия
+## Безопасность
+
+### Реализованные меры
+
+- JWT аутентификация с access/refresh токенами
+- BCrypt хеширование паролей
+- CORS настройка
+- Rate limiting
+- Input validation (Jakarta Validation)
+- SQL injection protection (JPA)
+- XSS prevention (Content Security Policy)
+
+### Production Checklist
+
+- [ ] Изменить JWT_SECRET на криптографически стойкий
+- [ ] Настроить HTTPS
+- [ ] Ограничить CORS origins
+- [ ] Включить rate limiting
+- [ ] Настроить firewall
+- [ ] Регулярные бэкапы БД
+
+---
+
+## Лицензия
 
 MIT License — см. [LICENSE](../LICENSE)
 
