@@ -13,15 +13,6 @@ target/
 !**/src/test/**/target/
 
 # =====================
-# Node.js / NPM
-# =====================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-store/
-
-# =====================
 # Environment Variables
 # =====================
 .env
@@ -88,13 +79,6 @@ test-results/
 *.lcov
 
 # =====================
-# Frontend (Angular)
-# =====================
-frontend/.angular/
-frontend/dist/
-frontend/.sass-cache/
-
-# =====================
 # Backend (Java)
 # =====================
 backend-java/**/target/
@@ -102,10 +86,10 @@ backend-java/**/*.class
 backend-java/**/logs/
 
 # =====================
-# Bots (Node.js)
+# Java Bots
 # =====================
-bots/**/node_modules/
-bots/**/.env
+backend-java/bots/**/target/
+backend-java/bots/**/*.jar
 
 # =====================
 # OS Files

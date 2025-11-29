@@ -387,11 +387,14 @@ mvn test jacoco:report
 - [x] Kafka события
 
 ### Planned
+- [ ] Frontend SPA (Angular/React/Vue)
 - [ ] Mobile apps (iOS, Android)
 - [ ] AI-powered recommendations
 - [ ] xAPI (Tin Can) integration
 - [ ] GraphQL API
 - [ ] Multi-tenancy improvements
+
+> **Note**: Этот репозиторий содержит только Backend API. Frontend разрабатывается отдельно. См. [FRONTEND.md](docs/FRONTEND.md)
 
 ---
 
