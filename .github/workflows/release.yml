@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR
+        run: |
+          cd backend-java/monolith
+          mvn clean package -DskipTests
+
+      - name: Build and Push Docker Image
+        run: |
+          cd backend-java/monolith
+          docker build -t freelms/app:${{ github.ref_name }} .
+          docker tag freelms/app:${{ github.ref_name }} freelms/app:latest
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            backend-java/monolith/target/*.jar
+          generate_release_notes: true
