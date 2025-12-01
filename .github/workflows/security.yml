@@ -11,6 +11,8 @@ on:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +39,7 @@ jobs:
   codeql:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
 
     steps:
