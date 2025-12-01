@@ -330,7 +330,7 @@ docker-compose -f docker-compose.monolith.yml logs -f app | grep ERROR
 
 ### Единая схема
 
-Все данные хранятся в единой PostgreSQL базе данных с Flyway миграциями:
+Все данные хранятся в единой PostgreSQL базе данных с Liquibase миграциями:
 
 ```
 freelms/
@@ -356,8 +356,15 @@ freelms/
 
 ```bash
 # Миграции применяются автоматически при запуске
-# Для ручного применения:
-mvn flyway:migrate
+
+# Ручной запуск миграций (если нужно)
+mvn liquibase:update
+
+# Проверка статуса миграций
+mvn liquibase:status
+
+# Откат последней миграции
+mvn liquibase:rollback -Dliquibase.rollbackCount=1
 ```
 
 ---

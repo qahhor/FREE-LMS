@@ -101,7 +101,7 @@ FREE LMS использует модульную монолитную архит
 | **Object Storage** | MinIO | Latest |
 | **ORM** | Spring Data JPA / Hibernate | 6.x |
 | **Security** | Spring Security + JWT | 6.x |
-| **Migration** | Flyway | 9.x |
+| **Migration** | Liquibase | 4.x |
 | **API Docs** | SpringDoc OpenAPI | 2.7.0 |
 | **Build Tool** | Maven | 3.9+ |
 | **Container** | Docker | 24+ |
@@ -194,8 +194,12 @@ backend-java/
 │       │   │
 │       │   └── resources/
 │       │       ├── application.yml            # Main config
-│       │       └── db/migration/
-│       │           └── V1__initial_schema.sql # Flyway migration
+│       │       └── db/changelog/
+│       │           ├── db.changelog-master.xml # Liquibase master
+│       │           ├── changes/
+│       │           │   └── 001-initial-schema.xml
+│       │           └── sql/
+│       │               └── V1__initial_schema.sql
 │       │
 │       └── test/                              # Tests
 │           ├── java/com/freelms/lms/
@@ -408,19 +412,19 @@ freelms/
 └── audit_logs               # Аудит-логи
 ```
 
-### Flyway миграции
+### Liquibase миграции
 
 ```bash
 # Миграции применяются автоматически при запуске
 
 # Ручной запуск миграций
-mvn flyway:migrate
+mvn liquibase:update
 
 # Проверка статуса
-mvn flyway:info
+mvn liquibase:status
 
-# Очистка (ОСТОРОЖНО!)
-mvn flyway:clean
+# Откат последней миграции
+mvn liquibase:rollback -Dliquibase.rollbackCount=1
 ```
 
 ---

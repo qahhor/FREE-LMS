@@ -201,7 +201,13 @@ docker-compose -f docker-compose.monolith.yml up -d app
 # Миграции применяются автоматически при запуске
 # Для ручного применения:
 cd backend-java/monolith
-mvn flyway:migrate
+mvn liquibase:update
+
+# Проверка статуса миграций
+mvn liquibase:status
+
+# Откат последней миграции
+mvn liquibase:rollback -Dliquibase.rollbackCount=1
 ```
 
 ---
