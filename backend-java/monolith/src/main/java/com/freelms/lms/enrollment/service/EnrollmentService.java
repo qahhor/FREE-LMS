@@ -6,11 +6,14 @@ import com.freelms.lms.common.exception.BadRequestException;
 import com.freelms.lms.common.exception.ConflictException;
 import com.freelms.lms.common.exception.ForbiddenException;
 import com.freelms.lms.common.exception.ResourceNotFoundException;
+import com.freelms.lms.course.entity.Course;
 import com.freelms.lms.course.repository.CourseRepository;
 import com.freelms.lms.course.repository.LessonRepository;
+import com.freelms.lms.enrollment.dto.CertificateDto;
 import com.freelms.lms.enrollment.dto.EnrollRequest;
 import com.freelms.lms.enrollment.dto.EnrollmentDto;
 import com.freelms.lms.enrollment.dto.UpdateProgressRequest;
+import com.freelms.lms.enrollment.entity.Certificate;
 import com.freelms.lms.enrollment.entity.Enrollment;
 import com.freelms.lms.enrollment.entity.LessonProgress;
 import com.freelms.lms.enrollment.repository.EnrollmentRepository;
@@ -24,6 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -79,31 +85,27 @@ public class EnrollmentService {
     @Transactional(readOnly = true)
     public PagedResponse<EnrollmentDto> getUserEnrollments(Long userId, Pageable pageable) {
         Page<Enrollment> enrollments = enrollmentRepository.findByUserId(userId, pageable);
-        List<EnrollmentDto> dtos = enrollments.getContent().stream().map(this::toDto).toList();
-        return PagedResponse.of(enrollments, dtos);
+        return toPagedEnrollmentResponse(enrollments);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<EnrollmentDto> getUserActiveEnrollments(Long userId, Pageable pageable) {
         Page<Enrollment> enrollments = enrollmentRepository.findByUserIdAndStatus(
                 userId, EnrollmentStatus.ACTIVE, pageable);
-        List<EnrollmentDto> dtos = enrollments.getContent().stream().map(this::toDto).toList();
-        return PagedResponse.of(enrollments, dtos);
+        return toPagedEnrollmentResponse(enrollments);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<EnrollmentDto> getUserCompletedEnrollments(Long userId, Pageable pageable) {
         Page<Enrollment> enrollments = enrollmentRepository.findByUserIdAndStatus(
                 userId, EnrollmentStatus.COMPLETED, pageable);
-        List<EnrollmentDto> dtos = enrollments.getContent().stream().map(this::toDto).toList();
-        return PagedResponse.of(enrollments, dtos);
+        return toPagedEnrollmentResponse(enrollments);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<EnrollmentDto> getRecentEnrollments(Long userId, Pageable pageable) {
         Page<Enrollment> enrollments = enrollmentRepository.findRecentByUserId(userId, pageable);
-        List<EnrollmentDto> dtos = enrollments.getContent().stream().map(this::toDto).toList();
-        return PagedResponse.of(enrollments, dtos);
+        return toPagedEnrollmentResponse(enrollments);
     }
 
     @Transactional
@@ -120,10 +122,11 @@ public class EnrollmentService {
         }
 
         // Update or create lesson progress
+        final Enrollment enrollmentRef = enrollment;
         LessonProgress lessonProgress = lessonProgressRepository
                 .findByEnrollmentIdAndLessonId(enrollmentId, request.getLessonId())
                 .orElseGet(() -> LessonProgress.builder()
-                        .enrollment(enrollment)
+                        .enrollment(enrollmentRef)
                         .lessonId(request.getLessonId())
                         .build());
 
@@ -179,7 +182,36 @@ public class EnrollmentService {
         return enrollmentRepository.findCourseIdsByUserId(userId);
     }
 
+    private PagedResponse<EnrollmentDto> toPagedEnrollmentResponse(Page<Enrollment> enrollments) {
+        if (enrollments.getContent().isEmpty()) {
+            return PagedResponse.of(enrollments, List.of());
+        }
+        
+        // Load all courses in one query to avoid N+1 problem
+        Map<Long, Course> coursesMap = loadCoursesMap(enrollments.getContent());
+        
+        List<EnrollmentDto> dtos = enrollments.getContent().stream()
+                .map(e -> toDto(e, coursesMap.get(e.getCourseId())))
+                .toList();
+        return PagedResponse.of(enrollments, dtos);
+    }
+
+    private Map<Long, Course> loadCoursesMap(List<Enrollment> enrollments) {
+        List<Long> courseIds = enrollments.stream()
+                .map(Enrollment::getCourseId)
+                .distinct()
+                .toList();
+        return courseRepository.findByIdIn(courseIds).stream()
+                .collect(Collectors.toMap(Course::getId, Function.identity()));
+    }
+
     private EnrollmentDto toDto(Enrollment enrollment) {
+        // Fetch course data for this single enrollment
+        Course course = courseRepository.findById(enrollment.getCourseId()).orElse(null);
+        return toDto(enrollment, course);
+    }
+
+    private EnrollmentDto toDto(Enrollment enrollment, Course course) {
         long completedLessons = lessonProgressRepository.countCompletedByEnrollmentId(enrollment.getId());
         long totalLessons = lessonRepository.countByCourseId(enrollment.getCourseId());
 
@@ -187,6 +219,8 @@ public class EnrollmentService {
                 .id(enrollment.getId())
                 .userId(enrollment.getUserId())
                 .courseId(enrollment.getCourseId())
+                .courseTitle(course != null ? course.getTitle() : null)
+                .courseThumbnail(course != null ? course.getThumbnailUrl() : null)
                 .status(enrollment.getStatus())
                 .progress(enrollment.getProgress())
                 .enrolledAt(enrollment.getEnrolledAt())
@@ -195,6 +229,26 @@ public class EnrollmentService {
                 .currentLessonId(enrollment.getCurrentLessonId())
                 .totalLessons((int) totalLessons)
                 .completedLessons((int) completedLessons)
+                .certificate(toCertificateDto(enrollment.getCertificate()))
+                .build();
+    }
+
+    private CertificateDto toCertificateDto(Certificate certificate) {
+        if (certificate == null) {
+            return null;
+        }
+        return CertificateDto.builder()
+                .id(certificate.getId())
+                .certificateNumber(certificate.getCertificateNumber())
+                .userId(certificate.getUserId())
+                .courseId(certificate.getCourseId())
+                .courseTitle(certificate.getCourseTitle())
+                .userName(certificate.getUserName())
+                .issuedAt(certificate.getIssuedAt())
+                .expiryAt(certificate.getExpiryAt())
+                .verificationUrl(certificate.getVerificationUrl())
+                .pdfUrl(certificate.getPdfUrl())
+                .expired(certificate.isExpired())
                 .build();
     }
 }

@@ -4,6 +4,7 @@ import com.freelms.lms.common.entity.BaseEntity;
 import com.freelms.lms.common.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.List;
 })
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Enrollment extends BaseEntity {

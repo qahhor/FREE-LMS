@@ -4,6 +4,7 @@ import com.freelms.lms.common.entity.BaseEntity;
 import com.freelms.lms.common.enums.QuestionType;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
 })
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuizQuestion extends BaseEntity {

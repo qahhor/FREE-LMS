@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface CourseMapper {
 
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "slug", ignore = true)
     @Mapping(target = "status", constant = "DRAFT")
     @Mapping(target = "studentCount", constant = "0")
@@ -22,7 +21,7 @@ public interface CourseMapper {
     @Mapping(target = "tags", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "instructorId", ignore = true)
-    @Mapping(target = "free", source = "isFree")
+    @BeanMapping(builder = @Builder(disableBuilder = true))
     Course toEntity(CreateCourseRequest request);
 
     @Mapping(target = "categoryId", source = "category.id")

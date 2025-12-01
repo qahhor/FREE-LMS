@@ -4,6 +4,7 @@ import com.freelms.lms.common.entity.BaseEntity;
 import com.freelms.lms.common.enums.LessonType;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "lessons", indexes = {
@@ -11,7 +12,7 @@ import lombok.*;
 })
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Lesson extends BaseEntity {

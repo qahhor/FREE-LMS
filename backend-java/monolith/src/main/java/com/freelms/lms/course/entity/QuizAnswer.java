@@ -3,6 +3,7 @@ package com.freelms.lms.course.entity;
 import com.freelms.lms.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "quiz_answers", indexes = {
@@ -10,7 +11,7 @@ import lombok.*;
 })
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuizAnswer extends BaseEntity {

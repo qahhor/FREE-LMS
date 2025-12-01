@@ -12,19 +12,17 @@ import java.util.List;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface UserMapper {
 
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "isActive", constant = "true")
-    @Mapping(target = "isEmailVerified", constant = "false")
     @Mapping(target = "level", constant = "1")
     @Mapping(target = "totalPoints", constant = "0")
     @Mapping(target = "failedLoginAttempts", constant = "0")
     @Mapping(target = "role", source = "role", defaultExpression = "java(com.freelms.lms.common.enums.UserRole.STUDENT)")
+    @BeanMapping(builder = @Builder(disableBuilder = true))
     User toEntity(RegisterRequest request);
 
     @Mapping(target = "fullName", expression = "java(user.getFullName())")
-    @Mapping(target = "active", source = "active")
-    @Mapping(target = "emailVerified", source = "emailVerified")
+    @Mapping(target = "active", expression = "java(user.isActive())")
+    @Mapping(target = "emailVerified", expression = "java(user.isEmailVerified())")
     UserDto toDto(User user);
 
     List<UserDto> toDtoList(List<User> users);
