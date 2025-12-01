@@ -1,118 +1,198 @@
 package com.freelms.bot.whatsapp.service;
 
+import com.freelms.bot.whatsapp.model.ApiResponse;
 import com.freelms.bot.whatsapp.model.Course;
+import com.freelms.bot.whatsapp.model.EnrollmentResponse;
+import com.freelms.bot.whatsapp.model.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Service for interacting with the FREE LMS API.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LmsApiService {
 
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+    private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
+
     private final WebClient webClient;
 
+    /**
+     * Fetches a paginated list of courses from the API.
+     *
+     * @param page page number (0-based)
+     * @param size number of courses per page
+     * @return list of courses, or empty list if API is unavailable
+     */
     public List<Course> getCourses(int page, int size) {
+        log.debug("Fetching courses: page={}, size={}", page, size);
         try {
-            // TODO: Implement real API call when backend is ready
-            // return webClient.get()
-            //         .uri("/courses?page={page}&size={size}", page, size)
-            //         .retrieve()
-            //         .bodyToFlux(Course.class)
-            //         .collectList()
-            //         .block();
+            ApiResponse<PagedResponse<Map<String, Object>>> response = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/courses")
+                            .queryParam("page", page)
+                            .queryParam("size", size)
+                            .build())
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, clientResponse -> {
+                        log.error("API error fetching courses: status={}", clientResponse.statusCode());
+                        return Mono.empty();
+                    })
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<PagedResponse<Map<String, Object>>>>() {})
+                    .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, RETRY_DELAY)
+                            .filter(this::isRetryableException)
+                            .doBeforeRetry(signal -> log.warn("Retrying getCourses, attempt {}", signal.totalRetries() + 1)))
+                    .onErrorResume(e -> {
+                        log.error("Error fetching courses: {}", e.getMessage());
+                        return Mono.empty();
+                    })
+                    .block();
 
-            // Demo data for testing
-            return getDemoCourses();
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                List<Course> courses = response.getData().getContent().stream()
+                        .map(this::mapToCourse)
+                        .toList();
+                log.info("Successfully fetched {} courses", courses.size());
+                return courses;
+            }
+
+            log.warn("No courses returned from API");
+            return Collections.emptyList();
         } catch (Exception e) {
-            log.error("Error fetching courses", e);
-            return getDemoCourses();
+            log.error("Error fetching courses from API", e);
+            return Collections.emptyList();
         }
     }
 
-    public List<Course> getUserCourses(String userId) {
-        try {
-            // TODO: Implement real API call when backend is ready
-            // return webClient.get()
-            //         .uri("/users/{userId}/courses", userId)
-            //         .retrieve()
-            //         .bodyToFlux(Course.class)
-            //         .collectList()
-            //         .block();
+    /**
+     * Fetches the user's enrolled courses using JWT authentication.
+     *
+     * @param accessToken JWT access token for authentication
+     * @return list of enrolled courses, or empty list if unavailable
+     */
+    public List<Course> getUserCourses(String accessToken) {
+        log.debug("Fetching user courses with authentication");
 
-            return getDemoUserCourses();
+        if (accessToken == null || accessToken.isBlank()) {
+            log.warn("No access token provided for getUserCourses");
+            return Collections.emptyList();
+        }
+
+        try {
+            ApiResponse<PagedResponse<EnrollmentResponse>> response = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/enrollments/my")
+                            .queryParam("page", 0)
+                            .queryParam("size", 20)
+                            .build())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, clientResponse -> {
+                        log.error("API error fetching user courses: status={}", clientResponse.statusCode());
+                        return Mono.empty();
+                    })
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<PagedResponse<EnrollmentResponse>>>() {})
+                    .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, RETRY_DELAY)
+                            .filter(this::isRetryableException)
+                            .doBeforeRetry(signal -> log.warn("Retrying getUserCourses, attempt {}", signal.totalRetries() + 1)))
+                    .onErrorResume(e -> {
+                        log.error("Error fetching user courses: {}", e.getMessage());
+                        return Mono.empty();
+                    })
+                    .block();
+
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                List<Course> courses = response.getData().getContent().stream()
+                        .map(this::mapEnrollmentToCourse)
+                        .toList();
+                log.info("Successfully fetched {} user courses", courses.size());
+                return courses;
+            }
+
+            log.warn("No user courses returned from API");
+            return Collections.emptyList();
         } catch (Exception e) {
-            log.error("Error fetching user courses", e);
-            return getDemoUserCourses();
+            log.error("Error fetching user courses from API", e);
+            return Collections.emptyList();
         }
     }
 
-    private List<Course> getDemoCourses() {
-        List<Course> courses = new ArrayList<>();
-
-        Course course1 = new Course();
-        course1.setId(1L);
-        course1.setTitle("Java Spring Boot Masterclass");
-        course1.setLevel("Intermediate");
-        course1.setPrice(new BigDecimal("49.99"));
-        course1.setFree(false);
-        courses.add(course1);
-
-        Course course2 = new Course();
-        course2.setId(2L);
-        course2.setTitle("React.js Complete Guide");
-        course2.setLevel("Beginner");
-        course2.setPrice(BigDecimal.ZERO);
-        course2.setFree(true);
-        courses.add(course2);
-
-        Course course3 = new Course();
-        course3.setId(3L);
-        course3.setTitle("DevOps with Docker & Kubernetes");
-        course3.setLevel("Advanced");
-        course3.setPrice(new BigDecimal("79.99"));
-        course3.setFree(false);
-        courses.add(course3);
-
-        Course course4 = new Course();
-        course4.setId(4L);
-        course4.setTitle("Python for Data Science");
-        course4.setLevel("Beginner");
-        course4.setPrice(BigDecimal.ZERO);
-        course4.setFree(true);
-        courses.add(course4);
-
-        Course course5 = new Course();
-        course5.setId(5L);
-        course5.setTitle("PostgreSQL Advanced Queries");
-        course5.setLevel("Advanced");
-        course5.setPrice(new BigDecimal("29.99"));
-        course5.setFree(false);
-        courses.add(course5);
-
-        return courses;
+    private boolean isRetryableException(Throwable throwable) {
+        if (throwable instanceof WebClientResponseException ex) {
+            int statusCode = ex.getStatusCode().value();
+            return statusCode == 503 || statusCode == 502 || statusCode == 504;
+        }
+        return throwable instanceof java.net.ConnectException
+                || throwable instanceof java.net.SocketTimeoutException;
     }
 
-    private List<Course> getDemoUserCourses() {
-        List<Course> courses = new ArrayList<>();
+    private Course mapToCourse(Map<String, Object> data) {
+        Course course = new Course();
+        course.setId(getLongValue(data, "id", 0L));
+        course.setTitle(getStringValue(data, "title", "Untitled"));
+        course.setDescription(getStringValue(data, "description", ""));
+        course.setLevel(getStringValue(data, "level", "Beginner"));
+        course.setThumbnailUrl(getStringValue(data, "thumbnailUrl", null));
 
-        Course course1 = new Course();
-        course1.setId(1L);
-        course1.setTitle("Java Spring Boot Masterclass");
-        course1.setLevel("Intermediate");
-        courses.add(course1);
+        Object priceObj = data.get("price");
+        if (priceObj instanceof Number num) {
+            course.setPrice(new BigDecimal(num.toString()));
+        }
 
-        Course course2 = new Course();
-        course2.setId(2L);
-        course2.setTitle("React.js Complete Guide");
-        course2.setLevel("Beginner");
-        courses.add(course2);
+        course.setFree(Boolean.TRUE.equals(data.get("free")));
 
-        return courses;
+        Object lessonCount = data.get("lessonCount");
+        if (lessonCount instanceof Number num) {
+            course.setTotalLessons(num.intValue());
+        }
+
+        Object durationMinutes = data.get("durationMinutes");
+        if (durationMinutes instanceof Number num) {
+            course.setTotalDuration(num.intValue());
+        }
+
+        return course;
+    }
+
+    private Course mapEnrollmentToCourse(EnrollmentResponse enrollment) {
+        Course course = new Course();
+        course.setId(enrollment.getCourseId());
+        course.setTitle(enrollment.getCourseTitle());
+        course.setThumbnailUrl(enrollment.getCourseThumbnail());
+        course.setTotalLessons(enrollment.getTotalLessons());
+        return course;
+    }
+
+    private Long getLongValue(Map<String, Object> data, String key, Long defaultValue) {
+        Object value = data.get(key);
+        if (value instanceof Number num) {
+            return num.longValue();
+        }
+        return defaultValue;
+    }
+
+    private String getStringValue(Map<String, Object> data, String key, String defaultValue) {
+        Object value = data.get(key);
+        if (value instanceof String str) {
+            return str;
+        }
+        return defaultValue;
     }
 }

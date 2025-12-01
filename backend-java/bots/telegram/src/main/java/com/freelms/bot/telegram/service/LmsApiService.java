@@ -1,52 +1,84 @@
 package com.freelms.bot.telegram.service;
 
 import com.freelms.bot.telegram.config.BotConfig;
+import com.freelms.bot.telegram.model.ApiResponse;
 import com.freelms.bot.telegram.model.Course;
+import com.freelms.bot.telegram.model.EnrollmentResponse;
+import com.freelms.bot.telegram.model.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+/**
+ * Service for interacting with the FREE LMS API.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LmsApiService {
 
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+    private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
+
     private final BotConfig botConfig;
     private final WebClient.Builder webClientBuilder;
 
+    /**
+     * Fetches a paginated list of courses from the API.
+     *
+     * @param page  page number (0-based)
+     * @param limit number of courses per page
+     * @return list of courses, or empty list if API is unavailable
+     */
     public List<Course> getCourses(int page, int limit) {
+        log.debug("Fetching courses: page={}, limit={}", page, limit);
         try {
             WebClient webClient = webClientBuilder.baseUrl(botConfig.getApiUrl()).build();
 
-            Map<String, Object> response = webClient.get()
+            ApiResponse<PagedResponse<Map<String, Object>>> response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/courses")
                             .queryParam("page", page)
-                            .queryParam("limit", limit)
+                            .queryParam("size", limit)
                             .build())
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .onStatus(HttpStatusCode::isError, clientResponse -> {
+                        log.error("API error fetching courses: status={}", clientResponse.statusCode());
+                        return Mono.empty();
+                    })
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<PagedResponse<Map<String, Object>>>>() {})
+                    .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, RETRY_DELAY)
+                            .filter(this::isRetryableException)
+                            .doBeforeRetry(signal -> log.warn("Retrying getCourses, attempt {}", signal.totalRetries() + 1)))
                     .onErrorResume(e -> {
                         log.error("Error fetching courses: {}", e.getMessage());
-                        return Mono.just(Collections.emptyMap());
+                        return Mono.empty();
                     })
                     .block();
 
-            if (response != null && response.containsKey("data")) {
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> coursesData = (List<Map<String, Object>>) response.get("data");
-                return coursesData.stream()
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                List<Course> courses = response.getData().getContent().stream()
                         .map(this::mapToCourse)
                         .toList();
+                log.info("Successfully fetched {} courses", courses.size());
+                return courses;
             }
 
+            log.warn("No courses returned from API");
             return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error fetching courses from API", e);
@@ -54,39 +86,162 @@ public class LmsApiService {
         }
     }
 
+    /**
+     * Fetches a course by its ID.
+     *
+     * @param courseId the course ID
+     * @return the course, or empty if not found
+     */
+    public Optional<Course> getCourseById(Long courseId) {
+        log.debug("Fetching course by ID: {}", courseId);
+        try {
+            WebClient webClient = webClientBuilder.baseUrl(botConfig.getApiUrl()).build();
+
+            ApiResponse<Map<String, Object>> response = webClient.get()
+                    .uri("/courses/{id}", courseId)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, clientResponse -> {
+                        log.error("API error fetching course {}: status={}", courseId, clientResponse.statusCode());
+                        return Mono.empty();
+                    })
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Map<String, Object>>>() {})
+                    .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, RETRY_DELAY)
+                            .filter(this::isRetryableException)
+                            .doBeforeRetry(signal -> log.warn("Retrying getCourseById, attempt {}", signal.totalRetries() + 1)))
+                    .onErrorResume(e -> {
+                        log.error("Error fetching course {}: {}", courseId, e.getMessage());
+                        return Mono.empty();
+                    })
+                    .block();
+
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                Course course = mapToCourse(response.getData());
+                log.info("Successfully fetched course: {}", course.getTitle());
+                return Optional.of(course);
+            }
+
+            log.warn("Course {} not found", courseId);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error fetching course {} from API", courseId, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Fetches the user's enrolled courses using JWT authentication.
+     *
+     * @param accessToken JWT access token for authentication
+     * @return list of enrolled courses, or empty list if unavailable
+     */
     public List<Course> getUserCourses(String accessToken) {
-        // TODO: Implement with actual API authentication
-        // For now, return demo data
-        Course course1 = new Course();
-        course1.setId(1L);
-        course1.setTitle("Introduction to Programming");
-        course1.setLevel("Beginner");
-        course1.setFree(true);
+        log.debug("Fetching user courses with authentication");
+        
+        if (accessToken == null || accessToken.isBlank()) {
+            log.warn("No access token provided for getUserCourses");
+            return Collections.emptyList();
+        }
 
-        Course course2 = new Course();
-        course2.setId(2L);
-        course2.setTitle("Web Development Basics");
-        course2.setLevel("Beginner");
-        course2.setFree(false);
+        try {
+            WebClient webClient = webClientBuilder.baseUrl(botConfig.getApiUrl()).build();
 
-        return List.of(course1, course2);
+            ApiResponse<PagedResponse<EnrollmentResponse>> response = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/enrollments/my")
+                            .queryParam("page", 0)
+                            .queryParam("size", 20)
+                            .build())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, clientResponse -> {
+                        log.error("API error fetching user courses: status={}", clientResponse.statusCode());
+                        return Mono.empty();
+                    })
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<PagedResponse<EnrollmentResponse>>>() {})
+                    .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, RETRY_DELAY)
+                            .filter(this::isRetryableException)
+                            .doBeforeRetry(signal -> log.warn("Retrying getUserCourses, attempt {}", signal.totalRetries() + 1)))
+                    .onErrorResume(e -> {
+                        log.error("Error fetching user courses: {}", e.getMessage());
+                        return Mono.empty();
+                    })
+                    .block();
+
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                List<Course> courses = response.getData().getContent().stream()
+                        .map(this::mapEnrollmentToCourse)
+                        .toList();
+                log.info("Successfully fetched {} user courses", courses.size());
+                return courses;
+            }
+
+            log.warn("No user courses returned from API");
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error fetching user courses from API", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private boolean isRetryableException(Throwable throwable) {
+        if (throwable instanceof WebClientResponseException ex) {
+            int statusCode = ex.getStatusCode().value();
+            return statusCode == 503 || statusCode == 502 || statusCode == 504;
+        }
+        return throwable instanceof java.net.ConnectException
+                || throwable instanceof java.net.SocketTimeoutException;
     }
 
     private Course mapToCourse(Map<String, Object> data) {
         Course course = new Course();
-        course.setId(((Number) data.getOrDefault("id", 0L)).longValue());
-        course.setTitle((String) data.getOrDefault("title", "Untitled"));
-        course.setDescription((String) data.getOrDefault("description", ""));
-        course.setLevel((String) data.getOrDefault("level", "Beginner"));
+        course.setId(getLongValue(data, "id", 0L));
+        course.setTitle(getStringValue(data, "title", "Untitled"));
+        course.setDescription(getStringValue(data, "description", ""));
+        course.setLevel(getStringValue(data, "level", "Beginner"));
+        course.setThumbnailUrl(getStringValue(data, "thumbnailUrl", null));
 
         Object priceObj = data.get("price");
-        if (priceObj instanceof Number) {
-            course.setPrice(new java.math.BigDecimal(priceObj.toString()));
+        if (priceObj instanceof Number num) {
+            course.setPrice(new BigDecimal(num.toString()));
         }
 
-        course.setFree(Boolean.TRUE.equals(data.get("isFree")));
-        course.setThumbnailUrl((String) data.get("thumbnailUrl"));
+        course.setFree(Boolean.TRUE.equals(data.get("free")));
+
+        Object lessonCount = data.get("lessonCount");
+        if (lessonCount instanceof Number num) {
+            course.setTotalLessons(num.intValue());
+        }
+
+        Object durationMinutes = data.get("durationMinutes");
+        if (durationMinutes instanceof Number num) {
+            course.setTotalDuration(num.intValue());
+        }
 
         return course;
+    }
+
+    private Course mapEnrollmentToCourse(EnrollmentResponse enrollment) {
+        Course course = new Course();
+        course.setId(enrollment.getCourseId());
+        course.setTitle(enrollment.getCourseTitle());
+        course.setThumbnailUrl(enrollment.getCourseThumbnail());
+        course.setTotalLessons(enrollment.getTotalLessons());
+        return course;
+    }
+
+    private Long getLongValue(Map<String, Object> data, String key, Long defaultValue) {
+        Object value = data.get(key);
+        if (value instanceof Number num) {
+            return num.longValue();
+        }
+        return defaultValue;
+    }
+
+    private String getStringValue(Map<String, Object> data, String key, String defaultValue) {
+        Object value = data.get(key);
+        if (value instanceof String str) {
+            return str;
+        }
+        return defaultValue;
     }
 }

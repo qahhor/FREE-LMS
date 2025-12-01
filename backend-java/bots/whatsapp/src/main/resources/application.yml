@@ -8,6 +8,14 @@ twilio:
   whatsapp-number: ${TWILIO_WHATSAPP_NUMBER:+14155238886}
   api-url: ${LMS_API_URL:http://localhost:8080/api/v1}
 
+lms:
+  api:
+    url: ${LMS_API_URL:http://localhost:8080/api/v1}
+    timeout: 10000
+    retry:
+      max-attempts: 3
+      delay: 1000
+
 server:
   port: 8082
 

@@ -135,7 +135,6 @@ public class MessageHandler {
             }
         }
 
-        sb.append("\n_(Demo data - connect API for real data)_");
         sb.append("\nReply *menu* to go back.");
 
         messageService.sendMessage(from, sb.toString());

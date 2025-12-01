@@ -228,8 +228,6 @@ public class FreeLmsTelegramBot extends TelegramLongPollingBot {
             }
         }
 
-        sb.append("\n(Demo data - connect API for real data)");
-
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
         message.setText(sb.toString());
