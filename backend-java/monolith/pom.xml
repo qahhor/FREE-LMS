@@ -28,7 +28,7 @@
         <!-- Dependencies versions -->
         <jjwt.version>0.12.6</jjwt.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
         <springdoc.version>2.7.0</springdoc.version>
         <stripe.version>28.2.0</stripe.version>
         <minio.version>8.5.14</minio.version>
