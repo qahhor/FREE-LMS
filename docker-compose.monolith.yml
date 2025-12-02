@@ -12,26 +12,29 @@ services:
       dockerfile: Dockerfile
     container_name: freelms-app
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
       - SERVER_PORT=8080
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=freelms
-      - DB_USER=freelms
-      - DB_PASSWORD=freelms_password
-      - DB_POOL_SIZE=20
+      - DB_NAME=${POSTGRES_DB:-freelms}
+      - DB_USER=${POSTGRES_USER:-freelms}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - DB_POOL_SIZE=${DB_POOL_SIZE:-20}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - KAFKA_SERVERS=kafka:29092
       - ELASTICSEARCH_URIS=http://elasticsearch:9200
       - MONGODB_URI=mongodb://mongodb:27017/freelms
       - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - JWT_SECRET=your-super-secret-256-bit-key-change-in-production-minimum-32-chars
-      - LOG_LEVEL=INFO
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HTTP_CONNECT_TIMEOUT=${HTTP_CONNECT_TIMEOUT:-10000}
+      - HTTP_READ_TIMEOUT=${HTTP_READ_TIMEOUT:-30000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,9 +59,9 @@ services:
     image: postgres:16-alpine
     container_name: freelms-postgres
     environment:
-      - POSTGRES_USER=freelms
-      - POSTGRES_PASSWORD=freelms_password
-      - POSTGRES_DB=freelms
+      - POSTGRES_USER=${POSTGRES_USER:-freelms}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_DB=${POSTGRES_DB:-freelms}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -88,7 +91,14 @@ services:
   redis:
     image: redis:7-alpine
     container_name: freelms-redis
-    command: redis-server --appendonly yes
+    command: >
+      sh -c 'if [ -n "$${REDIS_PASSWORD}" ]; then
+        redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}";
+      else
+        redis-server --appendonly yes;
+      fi'
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     volumes:
       - redis_data:/data
     ports:
@@ -162,8 +172,8 @@ services:
     container_name: freelms-minio
     command: server /data --console-address ":9001"
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
     volumes:
       - minio_data:/data
     ports:
@@ -199,7 +209,7 @@ services:
     image: grafana/grafana:latest
     container_name: freelms-grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
     volumes:
       - grafana_data:/var/lib/grafana
     ports:

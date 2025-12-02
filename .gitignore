@@ -13,12 +13,27 @@ target/
 !**/src/test/**/target/
 
 # =====================
-# Environment Variables
+# Environment Variables & Secrets
 # =====================
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
 *.env
+!.env.example
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+**/secrets/
+**/credentials/
+credentials.json
+service-account.json
 
 # =====================
 # Build Outputs
