@@ -7,7 +7,9 @@ import com.freelms.lms.auth.mapper.UserMapper;
 import com.freelms.lms.auth.repository.RefreshTokenRepository;
 import com.freelms.lms.auth.repository.UserRepository;
 import com.freelms.lms.common.enums.UserRole;
+import com.freelms.lms.common.exception.BadRequestException;
 import com.freelms.lms.common.exception.ConflictException;
+import com.freelms.lms.common.exception.ResourceNotFoundException;
 import com.freelms.lms.common.exception.UnauthorizedException;
 import com.freelms.lms.common.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -181,5 +183,126 @@ class AuthServiceTest {
 
         // Then
         verify(refreshTokenRepository).revokeAllUserTokens(1L);
+    }
+
+    @Test
+    @DisplayName("Should refresh token successfully")
+    void shouldRefreshTokenSuccessfully() {
+        // Given
+        RefreshToken refreshToken = RefreshToken.builder()
+                .token("validRefreshToken")
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .revoked(false)
+                .deviceInfo("Test Device")
+                .ipAddress("127.0.0.1")
+                .build();
+
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("validRefreshToken")
+                .build();
+
+        when(refreshTokenRepository.findByToken("validRefreshToken")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
+        when(jwtTokenProvider.generateToken(anyLong(), anyString(), any(UserRole.class))).thenReturn("newAccessToken");
+        when(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("newRefreshToken");
+        when(userMapper.toDto(any(User.class))).thenReturn(new UserDto());
+
+        // When
+        AuthResponse response = authService.refreshToken(request);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("newAccessToken");
+        assertThat(response.getRefreshToken()).isEqualTo("newRefreshToken");
+        verify(refreshTokenRepository).save(argThat(token -> token.isRevoked()));
+    }
+
+    @Test
+    @DisplayName("Should throw UnauthorizedException for expired refresh token")
+    void shouldThrowUnauthorizedExceptionForExpiredRefreshToken() {
+        // Given
+        RefreshToken expiredToken = RefreshToken.builder()
+                .token("expiredRefreshToken")
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().minusDays(1))
+                .revoked(false)
+                .build();
+
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("expiredRefreshToken")
+                .build();
+
+        when(refreshTokenRepository.findByToken("expiredRefreshToken")).thenReturn(Optional.of(expiredToken));
+
+        // When/Then
+        assertThatThrownBy(() -> authService.refreshToken(request))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("expired or revoked");
+    }
+
+    @Test
+    @DisplayName("Should throw UnauthorizedException for revoked refresh token")
+    void shouldThrowUnauthorizedExceptionForRevokedRefreshToken() {
+        // Given
+        RefreshToken revokedToken = RefreshToken.builder()
+                .token("revokedRefreshToken")
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .revoked(true)
+                .build();
+
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("revokedRefreshToken")
+                .build();
+
+        when(refreshTokenRepository.findByToken("revokedRefreshToken")).thenReturn(Optional.of(revokedToken));
+
+        // When/Then
+        assertThatThrownBy(() -> authService.refreshToken(request))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("expired or revoked");
+    }
+
+    @Test
+    @DisplayName("Should change password successfully")
+    void shouldChangePasswordSuccessfully() {
+        // Given
+        ChangePasswordRequest request = ChangePasswordRequest.builder()
+                .currentPassword("Password123!")
+                .newPassword("NewPassword123!")
+                .confirmPassword("NewPassword123!")
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("Password123!", testUser.getPassword())).thenReturn(true);
+        when(passwordEncoder.encode("NewPassword123!")).thenReturn("newEncodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        authService.changePassword(1L, request);
+
+        // Then
+        verify(userRepository).save(argThat(user -> user.getPassword().equals("newEncodedPassword")));
+        verify(refreshTokenRepository).revokeAllUserTokens(1L);
+    }
+
+    @Test
+    @DisplayName("Should throw BadRequestException when current password is incorrect")
+    void shouldThrowBadRequestExceptionForWrongOldPassword() {
+        // Given
+        ChangePasswordRequest request = ChangePasswordRequest.builder()
+                .currentPassword("WrongPassword123!")
+                .newPassword("NewPassword123!")
+                .confirmPassword("NewPassword123!")
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("WrongPassword123!", testUser.getPassword())).thenReturn(false);
+
+        // When/Then
+        assertThatThrownBy(() -> authService.changePassword(1L, request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Current password is incorrect");
     }
 }

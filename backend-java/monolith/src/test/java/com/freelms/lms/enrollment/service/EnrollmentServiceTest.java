@@ -149,4 +149,65 @@ class EnrollmentServiceTest {
         // Then
         verify(enrollmentRepository).save(argThat(e -> e.getStatus() == EnrollmentStatus.DROPPED));
     }
+
+    @Test
+    @DisplayName("Should get user enrollments successfully")
+    void shouldGetUserEnrollmentsSuccessfully() {
+        // Given
+        when(enrollmentRepository.findByUserId(eq(1L), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+
+        // When
+        var result = enrollmentService.getUserEnrollments(1L, org.springframework.data.domain.Pageable.unpaged());
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(enrollmentRepository).findByUserId(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("Should update progress successfully")
+    void shouldUpdateProgressSuccessfully() {
+        // Given
+        com.freelms.lms.enrollment.dto.UpdateProgressRequest progressRequest = 
+                com.freelms.lms.enrollment.dto.UpdateProgressRequest.builder()
+                        .lessonId(1L)
+                        .completed(true)
+                        .timeSpentSeconds(300)
+                        .videoPositionSeconds(280)
+                        .build();
+
+        when(enrollmentRepository.findById(1L)).thenReturn(Optional.of(testEnrollment));
+        when(lessonProgressRepository.findByEnrollmentIdAndLessonId(1L, 1L)).thenReturn(Optional.empty());
+        when(lessonProgressRepository.save(any())).thenReturn(null);
+        when(lessonRepository.countByCourseId(1L)).thenReturn(10L);
+        when(lessonProgressRepository.countCompletedByEnrollmentId(1L)).thenReturn(1L);
+        when(enrollmentRepository.save(any(Enrollment.class))).thenReturn(testEnrollment);
+
+        // When
+        EnrollmentDto result = enrollmentService.updateProgress(1L, 1L, progressRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(lessonProgressRepository).save(any());
+        verify(enrollmentRepository).save(argThat(e -> e.getCurrentLessonId().equals(1L)));
+    }
+
+    @Test
+    @DisplayName("Should throw ForbiddenException when updating progress for another user's enrollment")
+    void shouldThrowForbiddenExceptionForUpdateProgressNotOwner() {
+        // Given
+        com.freelms.lms.enrollment.dto.UpdateProgressRequest progressRequest = 
+                com.freelms.lms.enrollment.dto.UpdateProgressRequest.builder()
+                        .lessonId(1L)
+                        .completed(true)
+                        .build();
+
+        when(enrollmentRepository.findById(1L)).thenReturn(Optional.of(testEnrollment));
+
+        // When/Then
+        assertThatThrownBy(() -> enrollmentService.updateProgress(999L, 1L, progressRequest))
+                .isInstanceOf(com.freelms.lms.common.exception.ForbiddenException.class)
+                .hasMessageContaining("not authorized");
+    }
 }

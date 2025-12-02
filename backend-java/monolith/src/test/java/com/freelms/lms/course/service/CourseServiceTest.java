@@ -193,4 +193,59 @@ class CourseServiceTest {
         // Then
         verify(courseRepository).delete(testCourse);
     }
+
+    @Test
+    @DisplayName("Should get all published courses successfully")
+    void shouldGetAllPublishedCoursesSuccessfully() {
+        // Given
+        when(courseRepository.findByStatus(eq(CourseStatus.PUBLISHED), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        when(courseMapper.toDtoList(anyList())).thenReturn(new ArrayList<>());
+
+        // When
+        var result = courseService.getAllPublishedCourses(org.springframework.data.domain.Pageable.unpaged());
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(courseRepository).findByStatus(eq(CourseStatus.PUBLISHED), any());
+    }
+
+    @Test
+    @DisplayName("Should search courses successfully")
+    void shouldSearchCoursesSuccessfully() {
+        // Given
+        String query = "Java";
+        when(courseRepository.searchCourses(eq(query), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        when(courseMapper.toDtoList(anyList())).thenReturn(new ArrayList<>());
+
+        // When
+        var result = courseService.searchCourses(query, org.springframework.data.domain.Pageable.unpaged());
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(courseRepository).searchCourses(eq(query), any());
+    }
+
+    @Test
+    @DisplayName("Should update course successfully")
+    void shouldUpdateCourseSuccessfully() {
+        // Given
+        com.freelms.lms.course.dto.UpdateCourseRequest updateRequest = com.freelms.lms.course.dto.UpdateCourseRequest.builder()
+                .title("Updated Java Fundamentals")
+                .description("Updated description")
+                .build();
+
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
+        when(courseMapper.toDto(any(Course.class))).thenReturn(testCourseDto);
+
+        // When
+        CourseDto result = courseService.updateCourse(1L, 1L, updateRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(courseRepository).save(any(Course.class));
+        verify(courseMapper).updateCourseFromRequest(eq(updateRequest), eq(testCourse));
+    }
 }
