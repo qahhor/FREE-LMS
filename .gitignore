@@ -107,6 +107,16 @@ backend-java/bots/**/target/
 backend-java/bots/**/*.jar
 
 # =====================
+# Frontend (Angular/Node)
+# =====================
+node_modules/
+.angular/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =====================
 # OS Files
 # =====================
 Thumbs.db
