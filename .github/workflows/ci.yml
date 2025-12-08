@@ -69,7 +69,7 @@ jobs:
           mvn jacoco:report
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-report
           path: backend-java/monolith/target/site/jacoco/
